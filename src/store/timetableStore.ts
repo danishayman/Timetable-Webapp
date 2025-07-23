@@ -47,6 +47,13 @@ const useTimetableStore = create<TimetableState>()(
             // Detect clashes
             const clashes = findTimeClashes(timetableData.timetable_slots || []);
             set({ clashes });
+            
+            // Also load selected subjects into subject store if they exist
+            if (timetableData.selected_subjects && timetableData.selected_subjects.length > 0) {
+              // We'll set the selected subjects directly in the subject store state
+              // This avoids the linter error as we're not trying to call a method that doesn't exist
+              useSubjectStore.setState({ selectedSubjects: timetableData.selected_subjects });
+            }
           }
         },
 
@@ -346,6 +353,9 @@ const useTimetableStore = create<TimetableState>()(
             // Save to localStorage
             SessionManager.saveTimetableData(allSlots, customSlots, timetableName);
             
+            // Also save selected subjects
+            SessionManager.saveSelectedSubjects(selectedSubjects);
+            
             return allSlots;
           } catch (error) {
             console.error('Error generating timetable:', error);
@@ -362,13 +372,29 @@ const useTimetableStore = create<TimetableState>()(
          */
         saveToSession: () => {
           const { timetableSlots, customSlots, timetableName, sessionId } = get();
+          
+          // Save timetable data
           SessionManager.saveTimetableData(timetableSlots, customSlots, timetableName);
+          
+          // Also save selected subjects
+          const selectedSubjects = useSubjectStore.getState().selectedSubjects;
+          if (selectedSubjects.length > 0) {
+            SessionManager.saveSelectedSubjects(selectedSubjects);
+          }
+          
+          // Update expiration date
+          SessionManager.updateExpirationDate();
+          
+          return true;
         },
 
         /**
          * Load timetable from localStorage
          */
         loadFromSession: () => {
+          // Check for expired session and clear if needed
+          SessionManager.clearExpiredSession();
+          
           const timetableData = SessionManager.loadTimetableData();
           if (timetableData) {
             set({
@@ -381,6 +407,12 @@ const useTimetableStore = create<TimetableState>()(
             // Detect clashes
             const clashes = findTimeClashes(timetableData.timetable_slots || []);
             set({ clashes });
+            
+            // Also load selected subjects into subject store if they exist
+            if (timetableData.selected_subjects && timetableData.selected_subjects.length > 0) {
+              // Set selected subjects directly in the subject store
+              useSubjectStore.setState({ selectedSubjects: timetableData.selected_subjects });
+            }
             
             return timetableData.timetable_slots || [];
           }
@@ -425,6 +457,12 @@ const useTimetableStore = create<TimetableState>()(
           
           // Clear timetable data
           SessionManager.saveTimetableData([], [], DEFAULT_TIMETABLE_NAME);
+          
+          // Reset subject selections
+          const subjectStore = useSubjectStore.getState();
+          if (subjectStore.clearSelectedSubjects) {
+            subjectStore.clearSelectedSubjects();
+          }
         }
       }),
       {
@@ -441,6 +479,12 @@ const useTimetableStore = create<TimetableState>()(
           if (state) {
             // Check for expired session
             SessionManager.clearExpiredSession();
+            
+            // Detect clashes for hydrated state
+            if (state.timetableSlots && state.timetableSlots.length > 0) {
+              const clashes = findTimeClashes(state.timetableSlots);
+              state.clashes = clashes;
+            }
           }
         }
       }
@@ -451,7 +495,9 @@ const useTimetableStore = create<TimetableState>()(
 // Initialize the store
 if (typeof window !== 'undefined') {
   // Only run on client side
-  useTimetableStore.getState().initializeStore();
+  setTimeout(() => {
+    useTimetableStore.getState().initializeStore();
+  }, 0);
 }
 
 export default useTimetableStore; 
