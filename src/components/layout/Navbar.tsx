@@ -181,6 +181,39 @@ export default function Navbar() {
               >
                 ClashWarning
               </Link>
+              
+              <Link 
+                href="/admin-auth-store-test" 
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive('/admin-auth-store-test') 
+                    ? 'border-blue-500 text-gray-900 dark:text-white' 
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                AdminAuth
+              </Link>
+              
+              <Link 
+                href="/admin-login-form-test" 
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive('/admin-login-form-test') 
+                    ? 'border-blue-500 text-gray-900 dark:text-white' 
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                LoginForm
+              </Link>
+              
+              <Link 
+                href="/admin-login-page-test" 
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive('/admin-login-page-test') 
+                    ? 'border-blue-500 text-gray-900 dark:text-white' 
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                LoginPage
+              </Link>
             </div>
             
             {/* Mobile menu button */}
