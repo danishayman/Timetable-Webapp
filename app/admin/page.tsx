@@ -121,7 +121,7 @@ export default function AdminPage() {
             Manage class schedules and time slots
           </p>
           <button 
-            onClick={() => alert('Schedule management coming soon!')}
+            onClick={() => router.push('/admin/schedules')}
             className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
           >
             Manage Schedules
