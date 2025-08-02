@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/src/lib/supabase';
 import { ApiResponse, SubjectWithSchedulesResponse } from '@/src/types';
+import { handleError, createAppError, ERROR_CODES } from '@/src/lib/errorHandler';
 
 /**
  * GET /api/subjects/[id]
@@ -14,6 +15,19 @@ export async function GET(
     // Await params to get the id
     const { id } = await params;
 
+    // Validate ID format (basic UUID check)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return NextResponse.json(
+        {
+          data: null,
+          error: 'Invalid subject ID format',
+          status: 400
+        } as ApiResponse<SubjectWithSchedulesResponse>,
+        { status: 400 }
+      );
+    }
+
     // Fetch subject
     const { data: subject, error: subjectError } = await supabase
       .from('subjects')
@@ -24,6 +38,32 @@ export async function GET(
     if (subjectError) {
       console.error('Error fetching subject:', subjectError);
       
+      if (subjectError.code === 'PGRST116') {
+        return NextResponse.json(
+          {
+            data: null,
+            error: 'Subject not found',
+            status: 404
+          } as ApiResponse<SubjectWithSchedulesResponse>,
+          { status: 404 }
+        );
+      }
+      
+      const appError = handleError(subjectError, {
+        context: { operation: 'fetch_subject', subjectId: id }
+      });
+      
+      return NextResponse.json(
+        {
+          data: null,
+          error: appError.message,
+          status: appError.status || 500
+        } as ApiResponse<SubjectWithSchedulesResponse>,
+        { status: appError.status || 500 }
+      );
+    }
+
+    if (!subject) {
       return NextResponse.json(
         {
           data: null,
@@ -45,13 +85,17 @@ export async function GET(
     if (schedulesError) {
       console.error('Error fetching class schedules:', schedulesError);
       
+      const appError = handleError(schedulesError, {
+        context: { operation: 'fetch_schedules', subjectId: id }
+      });
+      
       return NextResponse.json(
         {
           data: null,
-          error: 'Failed to fetch class schedules',
-          status: 500
+          error: appError.message,
+          status: appError.status || 500
         } as ApiResponse<SubjectWithSchedulesResponse>,
-        { status: 500 }
+        { status: appError.status || 500 }
       );
     }
 
@@ -66,13 +110,17 @@ export async function GET(
     if (tutorialsError) {
       console.error('Error fetching tutorial groups:', tutorialsError);
       
+      const appError = handleError(tutorialsError, {
+        context: { operation: 'fetch_tutorials', subjectId: id }
+      });
+      
       return NextResponse.json(
         {
           data: null,
-          error: 'Failed to fetch tutorial groups',
-          status: 500
+          error: appError.message,
+          status: appError.status || 500
         } as ApiResponse<SubjectWithSchedulesResponse>,
-        { status: 500 }
+        { status: appError.status || 500 }
       );
     }
 
@@ -92,13 +140,17 @@ export async function GET(
   } catch (error) {
     console.error('Unexpected error in subject details API:', error);
     
+    const appError = handleError(error, {
+      context: { operation: 'subject_details_api' }
+    });
+    
     return NextResponse.json(
       {
         data: null,
-        error: 'An unexpected error occurred',
-        status: 500
+        error: appError.message,
+        status: appError.status || 500
       } as ApiResponse<SubjectWithSchedulesResponse>,
-      { status: 500 }
+      { status: appError.status || 500 }
     );
   }
 } 

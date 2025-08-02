@@ -13,7 +13,11 @@ export interface SubjectState {
   searchQuery: string;
   filters: SubjectFilters;
   isLoading: boolean;
+  isInitializing: boolean;
+  isSaving: boolean;
+  isDeleting: boolean;
   error: string | null;
+  loadingOperation: string | null;
   
   // Methods
   initializeStore: () => void;

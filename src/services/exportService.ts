@@ -1,5 +1,7 @@
 import { TimetableSlot } from '@/src/types/timetable';
 import { DAYS_OF_WEEK, TIME_SLOTS } from '@/src/lib/constants';
+import { handleError, withRetry, createAppError, ERROR_CODES } from '@/src/lib/errorHandler';
+import { notifyError, notifySuccess, notifyLoading } from '@/src/lib/notifications';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -15,39 +17,50 @@ export class ExportService {
    * @returns Promise resolving to Blob containing the PDF
    */
   static async exportToPDF(timetableSlots: TimetableSlot[], title: string = 'My Timetable'): Promise<Blob> {
+    const loadingId = notifyLoading('Generating PDF', 'Creating your timetable PDF...');
+    
     try {
-      // Create a new PDF document
-      const pdf = new jsPDF('landscape', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      
-      // Add title
-      pdf.setFontSize(18);
-      pdf.text(title, pageWidth / 2, 15, { align: 'center' });
-      
-      // Add timestamp
-      pdf.setFontSize(10);
-      pdf.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, 22, { align: 'center' });
-      
-      // Draw timetable grid
-      const margin = 10;
-      const gridWidth = pageWidth - (margin * 2);
-      const gridHeight = pageHeight - 35 - margin;
-      const colWidth = gridWidth / 8; // Time column + 7 days
-      const rowHeight = gridHeight / (TIME_SLOTS.length + 1); // +1 for header
-      
-      // Draw grid header
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(margin, 30, gridWidth, rowHeight, 'F');
-      
-      // Draw time column header
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text('Time', margin + (colWidth / 2), 30 + (rowHeight / 2), { align: 'center' });
-      
-      // Draw day headers
-      DAYS_OF_WEEK.forEach((day, index) => {
-        pdf.text(
+      // Validate input
+      if (!Array.isArray(timetableSlots)) {
+        throw createAppError(
+          'Invalid timetable data provided',
+          ERROR_CODES.VALIDATION_ERROR
+        );
+      }
+
+      return await withRetry(async () => {
+        // Create a new PDF document
+        const pdf = new jsPDF('landscape', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        
+        // Add title
+        pdf.setFontSize(18);
+        pdf.text(title, pageWidth / 2, 15, { align: 'center' });
+        
+        // Add timestamp
+        pdf.setFontSize(10);
+        pdf.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, 22, { align: 'center' });
+        
+        // Draw timetable grid
+        const margin = 10;
+        const gridWidth = pageWidth - (margin * 2);
+        const gridHeight = pageHeight - 35 - margin;
+        const colWidth = gridWidth / 8; // Time column + 7 days
+        const rowHeight = gridHeight / (TIME_SLOTS.length + 1); // +1 for header
+        
+        // Draw grid header
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(margin, 30, gridWidth, rowHeight, 'F');
+        
+        // Draw time column header
+        pdf.setFontSize(10);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('Time', margin + (colWidth / 2), 30 + (rowHeight / 2), { align: 'center' });
+        
+        // Draw day headers
+        DAYS_OF_WEEK.forEach((day, index) => {
+          pdf.text(
           day, 
           margin + colWidth + (colWidth * index) + (colWidth / 2), 
           30 + (rowHeight / 2), 
@@ -113,10 +126,25 @@ export class ExportService {
       
       // Convert to blob
       const pdfBlob = pdf.output('blob');
+      
+      // Remove loading notification and show success
+      const { removeNotification } = require('@/src/lib/notifications');
+      removeNotification(loadingId);
+      notifySuccess('PDF Generated', 'Your timetable PDF has been created successfully.');
+      
       return pdfBlob;
+      }, 2, 1000); // Retry up to 2 times with 1 second delay
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      throw new Error('Failed to generate PDF');
+      // Remove loading notification and show error
+      const { removeNotification } = require('@/src/lib/notifications');
+      removeNotification(loadingId);
+      
+      const appError = handleError(error, {
+        context: { operation: 'export_pdf', title, slotsCount: timetableSlots.length }
+      });
+      
+      notifyError('PDF Export Failed', appError.message);
+      throw appError;
     }
   }
   
@@ -300,7 +328,7 @@ export class ExportService {
           // Add slots to cell
           slotsForCell.forEach(slot => {
             const slotDiv = document.createElement('div');
-            slotDiv.style.backgroundColor = slot.color;
+            slotDiv.style.backgroundColor = slot.color || '#3b82f6'; // Default blue color
             slotDiv.style.color = 'white';
             slotDiv.style.padding = '4px';
             slotDiv.style.borderRadius = '4px';

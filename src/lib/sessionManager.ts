@@ -1,10 +1,11 @@
 import { SelectedSubject, TimetableData, TimetableSlot, CustomSlot } from '@/src/types';
 import { STORAGE_KEYS, SESSION_EXPIRATION, DEFAULT_TIMETABLE_NAME } from './constants';
 import { generateId } from './utils';
+import { handleError, safeStorage, createAppError, ERROR_CODES } from './errorHandler';
 
 /**
  * Session Manager class
- * Handles localStorage operations for timetable data
+ * Handles localStorage operations for timetable data with improved error handling
  */
 export class SessionManager {
   /**
@@ -16,17 +17,29 @@ export class SessionManager {
       return ''; // Server-side rendering
     }
     
-    let sessionId = localStorage.getItem(STORAGE_KEYS.SESSION_ID);
-    
-    if (!sessionId) {
-      sessionId = generateId();
-      localStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+    try {
+      let sessionId = safeStorage.getItem(STORAGE_KEYS.SESSION_ID, null);
       
-      // Set expiration date (30 days from now)
-      this.updateExpirationDate();
+      if (!sessionId) {
+        sessionId = generateId();
+        const success = safeStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+        
+        if (success) {
+          // Set expiration date (30 days from now)
+          this.updateExpirationDate();
+        } else {
+          console.warn('Failed to save session ID to localStorage');
+        }
+      }
+      
+      return sessionId || generateId(); // Fallback to generated ID if storage fails
+    } catch (error) {
+      const appError = handleError(error, {
+        context: { operation: 'get_session_id' }
+      });
+      console.error('Error getting session ID:', appError);
+      return generateId(); // Fallback to generated ID
     }
-    
-    return sessionId;
   }
   
   /**
@@ -38,9 +51,20 @@ export class SessionManager {
       return; // Server-side rendering
     }
     
-    const expirationDate = new Date();
-    expirationDate.setTime(expirationDate.getTime() + SESSION_EXPIRATION);
-    localStorage.setItem(STORAGE_KEYS.EXPIRATION, expirationDate.toISOString());
+    try {
+      const expirationDate = new Date();
+      expirationDate.setTime(expirationDate.getTime() + SESSION_EXPIRATION);
+      const success = safeStorage.setItem(STORAGE_KEYS.EXPIRATION, expirationDate.toISOString());
+      
+      if (!success) {
+        console.warn('Failed to update session expiration date');
+      }
+    } catch (error) {
+      const appError = handleError(error, {
+        context: { operation: 'update_expiration_date' }
+      });
+      console.error('Error updating expiration date:', appError);
+    }
   }
   
   /**

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Subject, CreateSubjectData, UpdateSubjectData } from '@/src/types';
+import { FormValidator } from '@/src/lib/inputValidation';
+import { sanitizeInput, edgeCaseValidation } from '@/src/lib/validations';
 
 interface SubjectFormProps {
   /** Subject to edit (undefined for creating new subject) */
@@ -60,52 +62,44 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
     }
   }, [subject]);
 
-  // Form validation
+  // Enhanced form validation using the new validation utilities
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+    // Use the comprehensive FormValidator
+    const validationResult = FormValidator.validateSubjectForm(formData, {
+      sanitize: true,
+      checkEdgeCases: true
+    });
 
-    // Code validation
-    if (!formData.code.trim()) {
-      newErrors.code = 'Subject code is required';
-    } else if (formData.code.length < 2) {
-      newErrors.code = 'Subject code must be at least 2 characters';
-    } else if (formData.code.length > 10) {
-      newErrors.code = 'Subject code must be 10 characters or less';
-    } else if (!/^[A-Za-z0-9]+$/.test(formData.code)) {
-      newErrors.code = 'Subject code can only contain letters and numbers';
+    if (!validationResult.isValid) {
+      // Convert validation errors to form error format
+      const newErrors: FormErrors = {};
+      validationResult.errors.forEach(error => {
+        if (error.includes('code')) {
+          newErrors.code = error;
+        } else if (error.includes('name')) {
+          newErrors.name = error;
+        } else if (error.includes('credits')) {
+          newErrors.credits = error;
+        } else if (error.includes('description')) {
+          newErrors.description = error;
+        } else if (error.includes('semester')) {
+          newErrors.semester = error;
+        } else if (error.includes('department')) {
+          newErrors.department = error;
+        }
+      });
+      
+      setErrors(newErrors);
+      return false;
     }
 
-    // Name validation
-    if (!formData.name.trim()) {
-      newErrors.name = 'Subject name is required';
-    } else if (formData.name.length < 3) {
-      newErrors.name = 'Subject name must be at least 3 characters';
-    } else if (formData.name.length > 200) {
-      newErrors.name = 'Subject name must be 200 characters or less';
+    // If validation passed, update form data with sanitized values
+    if (validationResult.sanitizedData) {
+      setFormData(validationResult.sanitizedData);
     }
 
-    // Credits validation
-    if (formData.credits < 1 || formData.credits > 12) {
-      newErrors.credits = 'Credits must be between 1 and 12';
-    }
-
-    // Description validation (optional but has limits)
-    if (formData.description.length > 1000) {
-      newErrors.description = 'Description must be 1000 characters or less';
-    }
-
-    // Semester validation (optional but has limits)
-    if (formData.semester && formData.semester.length > 50) {
-      newErrors.semester = 'Semester must be 50 characters or less';
-    }
-
-    // Department validation (optional but has limits)
-    if (formData.department && formData.department.length > 100) {
-      newErrors.department = 'Department must be 100 characters or less';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   };
 
   // Handle input changes
@@ -173,12 +167,12 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
   const isFormDisabled = isLoading || isSubmitting;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">
+    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md max-w-2xl mx-auto">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
         {subject ? 'Edit Subject' : 'Create New Subject'}
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Subject Code */}
         <div>
           <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
@@ -191,7 +185,7 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
             onChange={(e) => handleInputChange('code', e.target.value.toUpperCase())}
             disabled={isFormDisabled}
             placeholder="e.g., CS101, MATH201"
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
+            className={`w-full px-3 py-3 sm:py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 text-base sm:text-sm ${
               errors.code ? 'border-red-500' : 'border-gray-300'
             }`}
           />

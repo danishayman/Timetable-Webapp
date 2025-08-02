@@ -31,21 +31,29 @@ export default function SubjectCard({
 
   return (
     <div 
-      className={`${getBgColor()} rounded-lg border p-4 shadow-sm transition-colors ${
-        onClick ? 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-700' : ''
+      className={`${getBgColor()} rounded-lg border p-4 shadow-sm transition-all duration-200 ${
+        onClick ? 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md active:scale-95 active:shadow-sm touch-manipulation' : ''
       }`}
       onClick={handleClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
     >
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">
             {subject.code}
           </h3>
-          <h4 className="text-md font-medium text-gray-800 dark:text-gray-200">
+          <h4 className="text-sm font-medium text-gray-800 dark:text-gray-200 line-clamp-2 leading-tight">
             {subject.name}
           </h4>
         </div>
-        <span className="inline-flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/50 px-2.5 py-0.5 text-blue-700 dark:text-blue-200">
+        <span className="ml-3 flex-shrink-0 inline-flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/50 px-2.5 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-200">
           {subject.credits} {subject.credits === 1 ? 'credit' : 'credits'}
         </span>
       </div>

@@ -3,9 +3,11 @@
 import { useEffect } from 'react';
 import useSubjectStore from '@/src/store/subjectStore';
 import SubjectCard from './SubjectCard';
-import Loading from '../common/Loading';
+import { LoadingSpinner, PageLoading } from '../common/Loading';
+import { SubjectListSkeleton } from '../common/SkeletonLoaders';
 import ErrorMessage from '../common/ErrorMessage';
 import { Subject, SubjectFilters } from '@/src/types/subject';
+import { EmptyStateValidator, DataBoundaryValidator } from '@/src/lib/inputValidation';
 
 interface SubjectListProps {
   showFilters?: boolean;
@@ -35,7 +37,10 @@ export default function SubjectList({
     availableSubjects,
     selectedSubjects,
     isLoading,
+    isInitializing,
+    isSaving,
     error,
+    loadingOperation,
     fetchSubjects,
     selectSubject,
     unselectSubject
@@ -57,6 +62,17 @@ export default function SubjectList({
       if (isSelected) {
         unselectSubject(subject.id);
       } else {
+        // Check data boundaries before selection
+        const boundaryResult = DataBoundaryValidator.validateDataBoundaries(
+          selectedSubjects.length + 1, // Adding one more subject
+          'subjects'
+        );
+        
+        if (!boundaryResult.isValid) {
+          console.warn('Selection boundary exceeded:', boundaryResult.errors);
+          return;
+        }
+        
         selectSubject(subject);
       }
     }
@@ -64,6 +80,9 @@ export default function SubjectList({
 
   // Filter subjects if maxItems is provided
   const displaySubjects = maxItems ? availableSubjects.slice(0, maxItems) : availableSubjects;
+
+  // Check empty state
+  const emptyStateResult = EmptyStateValidator.checkEmptyState(availableSubjects, 'subjects');
 
   // Get selected subjects data
   const getSelectedSubjectsWithData = () => {
@@ -75,12 +94,12 @@ export default function SubjectList({
       .filter(Boolean);
   };
 
-  if (isLoading) {
-    return (
-      <div className="py-8">
-        <Loading size="large" />
-      </div>
-    );
+  if (isInitializing) {
+    return <PageLoading message="Initializing subjects..." />;
+  }
+
+  if (isLoading && !availableSubjects.length) {
+    return <SubjectListSkeleton count={6} />;
   }
 
   if (error) {
@@ -93,7 +112,14 @@ export default function SubjectList({
   }
 
   return (
-    <div>
+    <div className="relative">
+      {/* Loading overlay for operations */}
+      {(isLoading || isSaving) && loadingOperation && (
+        <div className="absolute top-0 left-0 right-0 bg-white bg-opacity-75 backdrop-blur-sm rounded-lg z-10 flex items-center justify-center py-4">
+          <LoadingSpinner size="medium" message={loadingOperation} />
+        </div>
+      )}
+
       {/* Selected subjects section */}
       {showSelectedSubjects && selectedSubjects.length > 0 && (
         <div className="mb-8">
@@ -118,7 +144,19 @@ export default function SubjectList({
       {/* Available subjects */}
       <div className="mb-8">
         {displaySubjects.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400 py-4">{emptyMessage}</p>
+          <div className="text-center py-8">
+            <p className="text-gray-500 dark:text-gray-400 mb-2">
+              {emptyStateResult.isEmpty ? emptyStateResult.message : emptyMessage}
+            </p>
+            {emptyStateResult.isEmpty && (
+              <button 
+                onClick={() => fetchSubjects()}
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                Refresh
+              </button>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {displaySubjects.map(subject => (

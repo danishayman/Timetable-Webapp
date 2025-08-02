@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ClassSchedule, CreateClassScheduleData, UpdateClassScheduleData } from '@/src/types/classSchedule';
 import { Subject } from '@/src/types/subject';
 import { DAYS_OF_WEEK, CLASS_TYPES } from '@/src/lib/constants';
+import { FormValidator } from '@/src/lib/inputValidation';
 
 interface ScheduleFormProps {
   /** Schedule to edit (undefined for creating new schedule) */
@@ -97,70 +98,55 @@ export default function ScheduleForm({
 
   // Form validation
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+    try {
+      // Use comprehensive form validator for schedule data
+      const validationResult = FormValidator.validateScheduleForm(formData, {
+        sanitize: true,
+        checkEdgeCases: true
+      });
 
-    // Subject ID validation
-    if (!formData.subject_id.trim()) {
-      newErrors.subject_id = 'Subject is required';
-    }
+      if (!validationResult.isValid) {
+        const newErrors: FormErrors = {};
+        
+        validationResult.errors.forEach(error => {
+          // Map validation errors to form fields
+          if (error.includes('Subject') || error.includes('subject_id')) {
+            newErrors.subject_id = error;
+          } else if (error.includes('Type') || error.includes('type')) {
+            newErrors.type = error;
+          } else if (error.includes('Day') || error.includes('day_of_week')) {
+            newErrors.day_of_week = error;
+          } else if (error.includes('Start time') || error.includes('start_time')) {
+            newErrors.start_time = error;
+          } else if (error.includes('End time') || error.includes('end_time')) {
+            newErrors.end_time = error;
+          } else if (error.includes('Venue') || error.includes('venue')) {
+            newErrors.venue = error;
+          } else if (error.includes('Instructor') || error.includes('instructor')) {
+            newErrors.instructor = error;
+          } else if (error.includes('Capacity') || error.includes('max_capacity')) {
+            newErrors.max_capacity = error;
+          } else {
+            newErrors.submit = error;
+          }
+        });
 
-    // Type validation
-    if (!formData.type) {
-      newErrors.type = 'Class type is required';
-    }
-
-    // Day validation
-    if (formData.day_of_week < 0 || formData.day_of_week > 6) {
-      newErrors.day_of_week = 'Please select a valid day';
-    }
-
-    // Time validation
-    if (!formData.start_time) {
-      newErrors.start_time = 'Start time is required';
-    }
-    if (!formData.end_time) {
-      newErrors.end_time = 'End time is required';
-    }
-
-    // Check if end time is after start time
-    if (formData.start_time && formData.end_time) {
-      const startTimeMinutes = timeToMinutes(formData.start_time);
-      const endTimeMinutes = timeToMinutes(formData.end_time);
-      
-      if (endTimeMinutes <= startTimeMinutes) {
-        newErrors.end_time = 'End time must be after start time';
+        setErrors(newErrors);
+        return false;
       }
-      
-      // Check for reasonable duration (at least 30 minutes, max 4 hours)
-      const durationMinutes = endTimeMinutes - startTimeMinutes;
-      if (durationMinutes < 30) {
-        newErrors.end_time = 'Class duration must be at least 30 minutes';
-      } else if (durationMinutes > 240) {
-        newErrors.end_time = 'Class duration cannot exceed 4 hours';
+
+      // Update form data with sanitized values if available
+      if (validationResult.sanitizedData) {
+        setFormData(prev => ({ ...prev, ...validationResult.sanitizedData }));
       }
-    }
 
-    // Venue validation
-    if (!formData.venue.trim()) {
-      newErrors.venue = 'Venue is required';
-    } else if (formData.venue.length > 100) {
-      newErrors.venue = 'Venue must be 100 characters or less';
+      setErrors({});
+      return true;
+    } catch (error) {
+      console.error('Form validation error:', error);
+      setErrors({ submit: 'Validation failed. Please check your inputs.' });
+      return false;
     }
-
-    // Instructor validation (optional but has limits)
-    if (formData.instructor.length > 100) {
-      newErrors.instructor = 'Instructor name must be 100 characters or less';
-    }
-
-    // Capacity validation
-    if (formData.max_capacity < 1) {
-      newErrors.max_capacity = 'Capacity must be at least 1';
-    } else if (formData.max_capacity > 500) {
-      newErrors.max_capacity = 'Capacity cannot exceed 500';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   // Helper function to convert time string to minutes

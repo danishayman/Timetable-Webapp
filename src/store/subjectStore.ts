@@ -5,6 +5,8 @@ import { SubjectState } from '@/src/types/store';
 import { SelectedSubject } from '@/src/types/timetable';
 import { supabase } from '@/src/lib/supabase';
 import { SessionManager } from '@/src/lib/sessionManager';
+import { handleError, withRetry, safeStorage, ERROR_CODES } from '@/src/lib/errorHandler';
+import { notify, notifyError, notifyNetworkError } from '@/src/lib/notifications';
 
 /**
  * Subject store
@@ -20,20 +22,40 @@ const useSubjectStore = create<SubjectState>()(
         searchQuery: '',
         filters: {},
         isLoading: false,
+        isInitializing: false,
+        isSaving: false,
+        isDeleting: false,
         error: null,
+        loadingOperation: null,
 
         /**
          * Initialize the store
          * Load selected subjects from localStorage
          */
         initializeStore: () => {
-          // Check for expired session and clear if needed
-          SessionManager.clearExpiredSession();
+          set({ isInitializing: true, loadingOperation: 'Initializing...' });
           
-          // Load selected subjects from localStorage
-          const savedSubjects = SessionManager.loadSelectedSubjects();
-          if (savedSubjects && savedSubjects.length > 0) {
-            set({ selectedSubjects: savedSubjects });
+          try {
+            // Check for expired session and clear if needed
+            SessionManager.clearExpiredSession();
+            
+            // Load selected subjects from localStorage
+            const savedSubjects = SessionManager.loadSelectedSubjects();
+            if (savedSubjects && savedSubjects.length > 0) {
+              set({ selectedSubjects: savedSubjects });
+            }
+            
+            set({ isInitializing: false, loadingOperation: null });
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'initialize_store' }
+            });
+            console.error('Failed to initialize subject store:', appError);
+            set({ 
+              isInitializing: false, 
+              loadingOperation: null,
+              error: appError.message 
+            });
           }
         },
 
@@ -41,42 +63,80 @@ const useSubjectStore = create<SubjectState>()(
          * Fetch subjects from the API
          */
         fetchSubjects: async (filters: SubjectFilters = {}) => {
-          set({ isLoading: true, error: null });
+          set({ 
+            isLoading: true, 
+            error: null, 
+            loadingOperation: 'Loading subjects...' 
+          });
           
           try {
-            // Build the query
-            let query = supabase.from('subjects').select('*');
-            
-            // Apply filters if provided
-            if (filters.department) {
-              query = query.eq('department', filters.department);
-            }
-            if (filters.semester) {
-              query = query.eq('semester', filters.semester);
-            }
-            if (filters.credits) {
-              query = query.eq('credits', filters.credits);
-            }
-            
-            // Execute the query
-            const { data, error } = await query.order('code');
-            
-            if (error) {
-              console.error('Error fetching subjects:', error);
-              set({ error: error.message, isLoading: false });
-              return;
-            }
+            await withRetry(async () => {
+              // Build the query
+              let query = supabase.from('subjects').select('*');
+              
+              // Apply filters if provided
+              if (filters.department) {
+                query = query.eq('department', filters.department);
+              }
+              if (filters.semester) {
+                query = query.eq('semester', filters.semester);
+              }
+              if (filters.credits) {
+                query = query.eq('credits', filters.credits);
+              }
+              
+              // Execute the query with timeout
+              const { data, error } = await Promise.race([
+                query.order('code'),
+                new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Request timeout')), 15000)
+                )
+              ]) as { data: Subject[] | null; error: any };
+              
+              if (error) {
+                if (error.message?.includes('timeout') || error.message?.includes('network')) {
+                  throw handleError(error, { 
+                    context: { operation: 'fetch_subjects', filters, errorType: 'network' }
+                  });
+                }
+                throw handleError(error, { 
+                  context: { operation: 'fetch_subjects', filters }
+                });
+              }
+              
+              set({ 
+                availableSubjects: data || [], 
+                isLoading: false,
+                error: null,
+                loadingOperation: null
+              });
+              
+              // Show success notification for first load or filtered results
+              if (data && data.length > 0) {
+                notify.success('Subjects loaded successfully', `Found ${data.length} subjects`);
+              }
+            }, 3, 1000);
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'fetch_subjects', filters }
+            });
             
             set({ 
-              availableSubjects: data || [], 
-              isLoading: false 
+              error: appError.message, 
+              isLoading: false,
+              loadingOperation: null
             });
-          } catch (err) {
-            console.error('Unexpected error fetching subjects:', err);
-            set({ 
-              error: 'Failed to fetch subjects. Please try again later.', 
-              isLoading: false 
-            });
+            
+            // Show user-friendly notification
+            if (appError.code === ERROR_CODES.NETWORK_ERROR) {
+              notifyNetworkError(() => get().fetchSubjects(filters));
+            } else {
+              notifyError(
+                'Failed to Load Subjects',
+                appError.message,
+                () => get().fetchSubjects(filters)
+              );
+            }
           }
         },
         
@@ -91,94 +151,173 @@ const useSubjectStore = create<SubjectState>()(
          * Set filters
          */
         setFilters: (filters: SubjectFilters) => {
-          set({ filters });
-          get().fetchSubjects(filters);
-          
-          // Save filters to localStorage
-          localStorage.setItem('timetable_filters', JSON.stringify(filters));
+          try {
+            set({ filters });
+            get().fetchSubjects(filters);
+            
+            // Save filters to localStorage with error handling
+            safeStorage.setItem('timetable_filters', filters);
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'set_filters', filters }
+            });
+            console.error('Failed to set filters:', appError);
+          }
         },
         
         /**
          * Clear filters
          */
         clearFilters: () => {
-          set({ filters: {} });
-          get().fetchSubjects({});
-          
-          // Clear filters from localStorage
-          localStorage.removeItem('timetable_filters');
+          try {
+            set({ filters: {} });
+            get().fetchSubjects({});
+            
+            // Clear filters from localStorage
+            safeStorage.removeItem('timetable_filters');
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'clear_filters' }
+            });
+            console.error('Failed to clear filters:', appError);
+          }
         },
         
         /**
          * Select a subject
          */
         selectSubject: (subject: Subject) => {
-          const { selectedSubjects } = get();
+          set({ isSaving: true, loadingOperation: 'Adding subject...' });
           
-          // Check if subject is already selected
-          if (selectedSubjects.some(s => s.subject_id === subject.id)) {
-            return;
+          try {
+            const { selectedSubjects } = get();
+            
+            // Check if subject is already selected
+            if (selectedSubjects.some(s => s.subject_id === subject.id)) {
+              notify.warning('Subject Already Selected', `${subject.code} is already in your timetable.`);
+              set({ isSaving: false, loadingOperation: null });
+              return;
+            }
+            
+            // Create new selected subject with proper typing
+            const newSelectedSubject: SelectedSubject = {
+              subject_id: subject.id,
+              subject_code: subject.code,
+              subject_name: subject.name,
+              tutorial_group_id: undefined,
+              color: generateRandomColor()
+            };
+            
+            // Add to selected subjects
+            const updatedSubjects = [...selectedSubjects, newSelectedSubject];
+            set({ selectedSubjects: updatedSubjects });
+            
+            // Save to localStorage with error handling
+            try {
+              SessionManager.saveSelectedSubjects(updatedSubjects);
+              notify.success('Subject Added', `${subject.code} has been added to your timetable.`);
+              set({ isSaving: false, loadingOperation: null });
+            } catch (storageError) {
+              console.warn('Failed to save to localStorage:', storageError);
+              notify.warning('Partial Success', `${subject.code} was added but may not persist after refresh.`);
+              set({ isSaving: false, loadingOperation: null });
+            }
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'select_subject', subjectId: subject.id }
+            });
+            notifyError('Failed to Select Subject', appError.message);
+            set({ isSaving: false, loadingOperation: null });
           }
-          
-          // Create new selected subject
-          const newSelectedSubject = {
-            subject_id: subject.id,
-            subject_code: subject.code,
-            subject_name: subject.name,
-            tutorial_group_id: null,
-            color: generateRandomColor()
-          };
-          
-          // Add to selected subjects
-          const updatedSubjects = [...selectedSubjects, newSelectedSubject];
-          set({ selectedSubjects: updatedSubjects });
-          
-          // Save to localStorage
-          SessionManager.saveSelectedSubjects(updatedSubjects);
         },
         
         /**
          * Unselect a subject
          */
         unselectSubject: (subjectId: string) => {
-          const { selectedSubjects } = get();
-          
-          const updatedSubjects = selectedSubjects.filter(
-            s => s.subject_id !== subjectId
-          );
-          
-          set({ selectedSubjects: updatedSubjects });
-          
-          // Save to localStorage
-          SessionManager.saveSelectedSubjects(updatedSubjects);
+          try {
+            const { selectedSubjects } = get();
+            
+            const subjectToRemove = selectedSubjects.find(s => s.subject_id === subjectId);
+            const updatedSubjects = selectedSubjects.filter(
+              s => s.subject_id !== subjectId
+            );
+            
+            set({ selectedSubjects: updatedSubjects });
+            
+            // Save to localStorage with error handling
+            try {
+              SessionManager.saveSelectedSubjects(updatedSubjects);
+              if (subjectToRemove) {
+                notify.success('Subject Removed', `${subjectToRemove.subject_code} has been removed from your timetable.`);
+              }
+            } catch (storageError) {
+              console.warn('Failed to save to localStorage:', storageError);
+              notify.warning('Partial Success', 'Subject was removed but changes may not persist after refresh.');
+            }
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'unselect_subject', subjectId }
+            });
+            notifyError('Failed to Remove Subject', appError.message);
+          }
         },
         
         /**
          * Select a tutorial group for a subject
          */
         selectTutorialGroup: (subjectId: string, tutorialGroupId: string) => {
-          const { selectedSubjects } = get();
-          
-          const updatedSubjects = selectedSubjects.map(s => 
-            s.subject_id === subjectId
-              ? { ...s, tutorial_group_id: tutorialGroupId }
-              : s
-          );
-          
-          set({ selectedSubjects: updatedSubjects });
-          
-          // Save to localStorage
-          SessionManager.saveSelectedSubjects(updatedSubjects);
+          try {
+            const { selectedSubjects } = get();
+            
+            const updatedSubjects = selectedSubjects.map(s => 
+              s.subject_id === subjectId
+                ? { ...s, tutorial_group_id: tutorialGroupId }
+                : s
+            );
+            
+            set({ selectedSubjects: updatedSubjects });
+            
+            // Save to localStorage with error handling
+            try {
+              SessionManager.saveSelectedSubjects(updatedSubjects);
+              const subject = updatedSubjects.find(s => s.subject_id === subjectId);
+              if (subject) {
+                notify.success('Tutorial Selected', `Tutorial group selected for ${subject.subject_code}.`);
+              }
+            } catch (storageError) {
+              console.warn('Failed to save to localStorage:', storageError);
+              notify.warning('Partial Success', 'Tutorial was selected but may not persist after refresh.');
+            }
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'select_tutorial_group', subjectId, tutorialGroupId }
+            });
+            notifyError('Failed to Select Tutorial', appError.message);
+          }
         },
         
         /**
          * Clear all selected subjects
          */
         clearSelectedSubjects: () => {
-          set({ selectedSubjects: [] });
-          
-          // Clear from localStorage
-          SessionManager.saveSelectedSubjects([]);
+          try {
+            set({ selectedSubjects: [] });
+            
+            // Clear from localStorage with error handling
+            try {
+              SessionManager.saveSelectedSubjects([]);
+              notify.success('Timetable Cleared', 'All subjects have been removed from your timetable.');
+            } catch (storageError) {
+              console.warn('Failed to save to localStorage:', storageError);
+              notify.warning('Partial Success', 'Subjects were cleared but changes may not persist after refresh.');
+            }
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'clear_selected_subjects' }
+            });
+            notifyError('Failed to Clear Subjects', appError.message);
+          }
         }
       }),
       {

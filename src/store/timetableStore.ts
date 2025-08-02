@@ -7,6 +7,8 @@ import { DEFAULT_TIMETABLE_NAME } from '@/src/lib/constants';
 import { generateTimetableFromSubjects, addCustomSlotsToTimetable } from '@/src/services/timetableService';
 import { findTimeClashes } from '@/src/services/clashDetection';
 import { SessionManager } from '@/src/lib/sessionManager';
+import { handleError, withRetry, safeStorage, ERROR_CODES } from '@/src/lib/errorHandler';
+import { notify, notifyError, notifySuccess, notifyLoading } from '@/src/lib/notifications';
 import useSubjectStore from './subjectStore';
 
 /**
@@ -31,29 +33,36 @@ const useTimetableStore = create<TimetableState>()(
          * Load timetable data from localStorage
          */
         initializeStore: () => {
-          // Check for expired session and clear if needed
-          SessionManager.clearExpiredSession();
-          
-          // Load timetable data from localStorage
-          const timetableData = SessionManager.loadTimetableData();
-          if (timetableData) {
-            set({
-              timetableSlots: timetableData.timetable_slots || [],
-              customSlots: timetableData.custom_slots || [],
-              timetableName: timetableData.name || DEFAULT_TIMETABLE_NAME,
-              sessionId: timetableData.session_id || SessionManager.getSessionId()
-            });
+          try {
+            // Check for expired session and clear if needed
+            SessionManager.clearExpiredSession();
             
-            // Detect clashes
-            const clashes = findTimeClashes(timetableData.timetable_slots || []);
-            set({ clashes });
-            
-            // Also load selected subjects into subject store if they exist
-            if (timetableData.selected_subjects && timetableData.selected_subjects.length > 0) {
-              // We'll set the selected subjects directly in the subject store state
-              // This avoids the linter error as we're not trying to call a method that doesn't exist
-              useSubjectStore.setState({ selectedSubjects: timetableData.selected_subjects });
+            // Load timetable data from localStorage
+            const timetableData = SessionManager.loadTimetableData();
+            if (timetableData) {
+              set({
+                timetableSlots: timetableData.timetable_slots || [],
+                customSlots: timetableData.custom_slots || [],
+                timetableName: timetableData.name || DEFAULT_TIMETABLE_NAME,
+                sessionId: timetableData.session_id || SessionManager.getSessionId()
+              });
+              
+              // Detect clashes
+              const clashes = findTimeClashes(timetableData.timetable_slots || []);
+              set({ clashes });
+              
+              // Also load selected subjects into subject store if they exist
+              if (timetableData.selected_subjects && timetableData.selected_subjects.length > 0) {
+                useSubjectStore.setState({ selectedSubjects: timetableData.selected_subjects });
+              }
             }
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'initialize_timetable_store' }
+            });
+            console.error('Failed to initialize timetable store:', appError);
+            // Set error state but don't show notification during initialization
+            set({ error: appError.message });
           }
         },
 
@@ -61,15 +70,27 @@ const useTimetableStore = create<TimetableState>()(
          * Set timetable slots
          */
         setTimetableSlots: (slots: TimetableSlot[]) => {
-          set({ timetableSlots: slots });
-          
-          // Detect clashes whenever slots change
-          const clashes = findTimeClashes(slots);
-          set({ clashes });
-          
-          // Save to localStorage
-          const { customSlots, timetableName, sessionId } = get();
-          SessionManager.saveTimetableData(slots, customSlots, timetableName);
+          try {
+            set({ timetableSlots: slots });
+            
+            // Detect clashes whenever slots change
+            const clashes = findTimeClashes(slots);
+            set({ clashes });
+            
+            // Save to localStorage with error handling
+            const { customSlots, timetableName } = get();
+            try {
+              SessionManager.saveTimetableData(slots, customSlots, timetableName);
+            } catch (storageError) {
+              console.warn('Failed to save timetable to localStorage:', storageError);
+              notify.warning('Save Warning', 'Timetable changes may not persist after refresh.');
+            }
+          } catch (error) {
+            const appError = handleError(error, {
+              context: { operation: 'set_timetable_slots', slotsCount: slots.length }
+            });
+            notifyError('Failed to Update Timetable', appError.message);
+          }
         },
 
         /**
