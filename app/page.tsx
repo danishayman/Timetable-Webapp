@@ -8,16 +8,39 @@ import TimetablePositioner from "@/src/components/timetable/TimetablePositioner"
 import ClassBlock from "@/src/components/timetable/ClassBlock";
 import SubjectSelectionModal from "@/src/components/common/SubjectSelectionModal";
 import useTimetableStore from "@/src/store/timetableStore";
+import useSubjectStore from "@/src/store/subjectStore";
 
 export default function Home() {
   const [showWeekends, setShowWeekends] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
-  const { timetableSlots, initializeStore } = useTimetableStore();
+  const { timetableSlots, initializeStore, generateTimetable, isGenerating } = useTimetableStore();
+  const { selectedSubjects, initializeStore: initializeSubjectStore } = useSubjectStore();
 
-  // Initialize the timetable store when component mounts
+  // Initialize both stores when component mounts
   useEffect(() => {
     initializeStore();
+    initializeSubjectStore();
   }, []); // Empty dependency array since Zustand functions are stable
+
+  // Automatically regenerate timetable when selected subjects change
+  useEffect(() => {
+    const regenerateTimetable = async () => {
+      try {
+        if (selectedSubjects.length > 0) {
+          await generateTimetable();
+        } else {
+          // Clear timetable if no subjects selected
+          // Use the setTimetableSlots method directly to avoid error message
+          const { setTimetableSlots } = useTimetableStore.getState();
+          setTimetableSlots([]);
+        }
+      } catch (error) {
+        console.error('Failed to regenerate timetable:', error);
+      }
+    };
+
+    regenerateTimetable();
+  }, [selectedSubjects, generateTimetable]);
 
   // Test Supabase connection on client-side
   const handleTestConnection = async () => {
@@ -45,7 +68,14 @@ export default function Home() {
       {/* Timetable Preview Section */}
       <div className="mb-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Your Timetable</h2>
+          <div>
+            <h2 className="text-2xl font-bold">Your Timetable</h2>
+            {selectedSubjects.length > 0 && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {selectedSubjects.length} subject{selectedSubjects.length !== 1 ? 's' : ''} selected
+              </p>
+            )}
+          </div>
           <div className="flex items-center gap-4">
             <button
               onClick={handleOpenSubjectModal}
@@ -68,33 +98,45 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Empty Timetable Grid */}
+        {/* Timetable Grid */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-          <TimetableGrid showWeekends={showWeekends}>
-            {timetableSlots.map((slot) => (
-              <TimetablePositioner
-                key={slot.id}
-                dayOfWeek={slot.day_of_week}
-                startTime={slot.start_time}
-                endTime={slot.end_time}
-                showWeekends={showWeekends}
-              >
-                <ClassBlock slot={slot} />
-              </TimetablePositioner>
-            ))}
-          </TimetableGrid>
+          {isGenerating ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="flex items-center space-x-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <span className="text-gray-600 dark:text-gray-300">Updating timetable...</span>
+              </div>
+            </div>
+          ) : (
+            <TimetableGrid showWeekends={showWeekends}>
+              {timetableSlots.map((slot) => (
+                <TimetablePositioner
+                  key={slot.id}
+                  dayOfWeek={slot.day_of_week}
+                  startTime={slot.start_time}
+                  endTime={slot.end_time}
+                  showWeekends={showWeekends}
+                >
+                  <ClassBlock slot={slot} />
+                </TimetablePositioner>
+              ))}
+            </TimetableGrid>
+          )}
         </div>
 
-        {timetableSlots.length === 0 && (
+        {!isGenerating && timetableSlots.length === 0 && (
           <div className="text-center mt-6">
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Your timetable is empty. Start by adding subjects to create your schedule.
+              {selectedSubjects.length === 0 
+                ? "Your timetable is empty. Start by adding subjects to create your schedule."
+                : "No class schedules available for your selected subjects."
+              }
             </p>
             <button
               onClick={handleOpenSubjectModal}
               className="inline-block bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
             >
-              Browse and Add Subjects
+              {selectedSubjects.length === 0 ? "Browse and Add Subjects" : "Manage Subjects"}
             </button>
           </div>
         )}
