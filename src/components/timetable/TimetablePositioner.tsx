@@ -61,7 +61,10 @@ export default function TimetablePositioner({
         zIndex: 10, // Ensure it appears above grid lines
         margin: '2px', // Add small margin for better visual separation
         height: `calc(100% - 4px)`, // Account for margin
-        width: `calc(100% - 4px)` // Account for margin
+        width: `calc(100% - 4px)`, // Account for margin
+        minWidth: 0, // Allow shrinking
+        overflow: 'hidden', // Prevent any content from overflowing
+        position: 'relative' // Ensure proper positioning context
       }}
     >
       {children}

@@ -116,9 +116,9 @@ export default function TimetableGrid({
           
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {TIME_SLOTS.map((time, timeIndex) => (
-              <div key={time} className="flex min-h-[6rem] hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <div key={time} className="flex min-h-[6rem] hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors">
                 {/* Time column */}
-                <div className="w-20 flex-shrink-0 p-3 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+                <div className="w-20 flex-shrink-0 p-3 text-sm font-medium text-white bg-slate-600 dark:bg-slate-700 border-r border-gray-200 dark:border-gray-700">
                   {formatTime(time)}
                 </div>
                 
@@ -213,8 +213,8 @@ export default function TimetableGrid({
                 key={time} 
                 className={`
                   p-3 h-20 flex items-center justify-center text-sm font-medium border-b border-r 
-                  border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300
-                  ${index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-750' : 'bg-white dark:bg-gray-800'}
+                  border-gray-200 dark:border-gray-700 text-white
+                  ${index % 2 === 0 ? 'bg-slate-600 dark:bg-slate-700' : 'bg-slate-700 dark:bg-slate-800'}
                 `}
               >
                 {formatTime(time)}
@@ -241,7 +241,7 @@ export default function TimetableGrid({
                     key={`cell-${dayIndex}-${timeIndex}`} 
                     className={`
                       border-b border-r last:border-r-0 border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors
-                      ${timeIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-750' : 'bg-white dark:bg-gray-800'}
+                      ${timeIndex % 2 === 0 ? 'bg-gray-100 dark:bg-gray-750' : 'bg-gray-50 dark:bg-gray-800'}
                     `}
                     style={{
                       gridColumn: dayIndex + 1,
