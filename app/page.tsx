@@ -57,22 +57,39 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Hero Section */}
-      <div className="container mx-auto px-6 py-16">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-2xl mb-8">
-            <svg className="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50 dark:from-slate-900 dark:via-purple-950/20 dark:to-indigo-950 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05]">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a855f7' fill-opacity='0.3'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}></div>
+      </div>
+      
+      {/* Floating Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-purple-200/10 dark:bg-purple-600/10 rounded-full blur-xl"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-indigo-200/10 dark:bg-indigo-600/10 rounded-full blur-xl"></div>
+        <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-purple-300/10 dark:bg-purple-500/10 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-20 right-1/3 w-28 h-28 bg-violet-200/10 dark:bg-violet-600/10 rounded-full blur-xl"></div>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Hero Section */}
+        <div className="container mx-auto px-6 py-16">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-2xl mb-8 shadow-lg">
+              <svg className="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h1 className="text-5xl font-bold mb-6 text-gray-900 dark:text-white">
+              Smart Timetable
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+              Effortlessly organize your academic schedule with intelligent clash detection and seamless subject management
+            </p>
           </div>
-          <h1 className="text-5xl font-bold mb-6 text-gray-900 dark:text-white">
-            Smart Timetable
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            Effortlessly organize your academic schedule with intelligent clash detection and seamless subject management
-          </p>
-        </div>
 
       {/* Timetable Section */}
       <div className="mb-16">
@@ -266,6 +283,7 @@ export default function Home() {
         >
           Test Database Connection
         </button>
+      </div>
       </div>
       </div>
 
