@@ -49,7 +49,7 @@ export default function SubjectList({
   // Fetch subjects on component mount with optional filters
   useEffect(() => {
     fetchSubjects(filters);
-  }, [fetchSubjects, filters]);
+  }, [filters]); // Only depend on filters since Zustand functions are stable
 
   // Handle subject click based on props or default behavior
   const handleSubjectClick = (subject: Subject) => {

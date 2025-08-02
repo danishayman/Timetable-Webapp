@@ -51,10 +51,8 @@ const useTimetableStore = create<TimetableState>()(
               const clashes = findTimeClashes(timetableData.timetable_slots || []);
               set({ clashes });
               
-              // Also load selected subjects into subject store if they exist
-              if (timetableData.selected_subjects && timetableData.selected_subjects.length > 0) {
-                useSubjectStore.setState({ selectedSubjects: timetableData.selected_subjects });
-              }
+              // Note: Selected subjects will be loaded by the subject store's initializeStore method
+              // to avoid cross-store state update issues
             }
           } catch (error) {
             const appError = handleError(error, {
@@ -429,11 +427,8 @@ const useTimetableStore = create<TimetableState>()(
             const clashes = findTimeClashes(timetableData.timetable_slots || []);
             set({ clashes });
             
-            // Also load selected subjects into subject store if they exist
-            if (timetableData.selected_subjects && timetableData.selected_subjects.length > 0) {
-              // Set selected subjects directly in the subject store
-              useSubjectStore.setState({ selectedSubjects: timetableData.selected_subjects });
-            }
+            // Note: Selected subjects will be loaded by the subject store's initializeStore method
+            // to avoid cross-store state update issues
             
             return timetableData.timetable_slots || [];
           }
