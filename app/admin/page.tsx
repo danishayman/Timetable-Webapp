@@ -106,7 +106,10 @@ export default function AdminPage() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Manage course subjects and their details
           </p>
-          <button className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+          <button 
+            onClick={() => router.push('/admin/subjects')}
+            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
             Manage Subjects
           </button>
         </div>
@@ -117,7 +120,10 @@ export default function AdminPage() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Manage class schedules and time slots
           </p>
-          <button className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+          <button 
+            onClick={() => alert('Schedule management coming soon!')}
+            className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+          >
             Manage Schedules
           </button>
         </div>
@@ -128,7 +134,10 @@ export default function AdminPage() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Manage tutorial groups and assignments
           </p>
-          <button className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors">
+          <button 
+            onClick={() => alert('Tutorial management coming soon!')}
+            className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+          >
             Manage Tutorials
           </button>
         </div>
