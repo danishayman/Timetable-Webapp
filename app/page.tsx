@@ -98,6 +98,35 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Selected Subjects List */}
+        {selectedSubjects.length > 0 && (
+          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
+                  Selected Subjects:
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedSubjects.map((subject) => (
+                    <span
+                      key={subject.subject_id}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+                    >
+                      {subject.subject_code}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={handleOpenSubjectModal}
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-medium"
+              >
+                Manage
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Timetable Grid */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
           {isGenerating ? (
