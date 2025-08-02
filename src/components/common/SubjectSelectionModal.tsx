@@ -20,7 +20,6 @@ export default function SubjectSelectionModal({
 }: SubjectSelectionModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
-  const [creditsFilter, setCreditsFilter] = useState('');
 
   const {
     availableSubjects,
@@ -49,9 +48,8 @@ export default function SubjectSelectionModal({
       (subject.department && subject.department.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesDepartment = !departmentFilter || subject.department === departmentFilter;
-    const matchesCredits = !creditsFilter || subject.credits.toString() === creditsFilter;
     
-    return matchesSearch && matchesDepartment && matchesCredits;
+    return matchesSearch && matchesDepartment;
   });
 
   // Get unique departments for filter
@@ -60,11 +58,6 @@ export default function SubjectSelectionModal({
       .map(subject => subject.department)
       .filter(Boolean)
   )).sort() as string[];
-
-  // Get unique credit values for filter
-  const creditOptions = Array.from(new Set(
-    availableSubjects.map(subject => subject.credits)
-  )).sort((a, b) => a - b);
 
   // Check if subject is selected
   const isSubjectSelected = (subjectId: string): boolean => {
@@ -84,17 +77,16 @@ export default function SubjectSelectionModal({
   const clearFilters = () => {
     setSearchQuery('');
     setDepartmentFilter('');
-    setCreditsFilter('');
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-5xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col">
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white pr-4">
             {title}
           </h2>
           <button
@@ -106,57 +98,46 @@ export default function SubjectSelectionModal({
         </div>
 
         {/* Search and Filters */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search subjects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                />
+        <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
+            {/* Department Filter and Search Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
+              {/* Department Filter */}
+              <div className="sm:col-span-1">
+                <select
+                  value={departmentFilter}
+                  onChange={(e) => setDepartmentFilter(e.target.value)}
+                  className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">All Departments</option>
+                  {departments.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
               </div>
-            </div>
 
-            {/* Department Filter */}
-            <div>
-              <select
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">All Departments</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Credits Filter */}
-            <div>
-              <select
-                value={creditsFilter}
-                onChange={(e) => setCreditsFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">All Credits</option>
-                {creditOptions.map(credits => (
-                  <option key={credits} value={credits}>{credits} Credit{credits !== 1 ? 's' : ''}</option>
-                ))}
-              </select>
+              {/* Search */}
+              <div className="sm:col-span-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
+                  <input
+                    type="text"
+                    placeholder="Search subjects..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 sm:pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Clear Filters */}
-          {(searchQuery || departmentFilter || creditsFilter) && (
-            <div className="mt-4 flex justify-end">
+          {(searchQuery || departmentFilter) && (
+            <div className="mt-3 sm:mt-4 flex justify-end">
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
               >
                 Clear Filters
               </button>
@@ -165,10 +146,10 @@ export default function SubjectSelectionModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden flex">
+        <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
           {/* Available Subjects List */}
-          <div className="flex-1 p-6 overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-gray-900 dark:text-white">
               Available Subjects ({filteredSubjects.length})
             </h3>
 
@@ -184,73 +165,40 @@ export default function SubjectSelectionModal({
                   <Search className="h-12 w-12 mx-auto" />
                 </div>
                 <p className="text-gray-500 dark:text-gray-400">
-                  {searchQuery || departmentFilter || creditsFilter 
+                  {searchQuery || departmentFilter 
                     ? "No subjects match your search criteria" 
                     : "No subjects available"}
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-3">
                 {filteredSubjects.map(subject => (
                   <div
                     key={subject.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                    className={`p-2 sm:p-4 border rounded-md sm:rounded-lg cursor-pointer transition-all duration-200 aspect-square relative flex flex-col justify-center items-center text-center ${
                       isSubjectSelected(subject.id)
                         ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                         : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 bg-white dark:bg-gray-700'
                     }`}
                     onClick={() => handleSubjectToggle(subject)}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3">
-                          <div className={`p-2 rounded-lg ${
-                            isSubjectSelected(subject.id)
-                              ? 'bg-green-500 text-white'
-                              : 'bg-blue-500 text-white'
-                          }`}>
-                            {isSubjectSelected(subject.id) ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <Plus className="h-4 w-4" />
-                            )}
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-gray-900 dark:text-white">
-                              {subject.code}
-                            </h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {subject.name}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          {subject.department && (
-                            <div className="flex items-center space-x-1">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              <span>{subject.department}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{subject.credits} Credit{subject.credits !== 1 ? 's' : ''}</span>
-                          </div>
-                          {subject.semester && (
-                            <div className="flex items-center space-x-1">
-                              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                              <span>{subject.semester}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {subject.description && (
-                          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                            {subject.description}
-                          </p>
-                        )}
-                      </div>
+                    <div className={`absolute top-1 sm:top-2 left-1 sm:left-2 p-0.5 sm:p-1.5 rounded-md sm:rounded-lg ${
+                      isSubjectSelected(subject.id)
+                        ? 'bg-green-500 text-white'
+                        : 'bg-blue-500 text-white'
+                    }`}>
+                      {isSubjectSelected(subject.id) ? (
+                        <Check className="h-2 w-2 sm:h-3 sm:w-3" />
+                      ) : (
+                        <Plus className="h-2 w-2 sm:h-3 sm:w-3" />
+                      )}
                     </div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-[10px] sm:text-sm mb-0.5 sm:mb-1">
+                      {subject.code}
+                    </h4>
+                    <p className="text-[8px] sm:text-xs leading-tight text-gray-600 dark:text-gray-300 px-0.5 sm:px-1">
+                      {subject.name}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -258,22 +206,22 @@ export default function SubjectSelectionModal({
           </div>
 
           {/* Selected Subjects Sidebar */}
-          <div className="w-80 border-l border-gray-200 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-800/50">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+          <div className="lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700 p-4 sm:p-6 bg-gray-50 dark:bg-gray-800/50 max-h-60 lg:max-h-none overflow-y-auto lg:overflow-visible">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-gray-900 dark:text-white">
               Selected Subjects ({selectedSubjects.length})
             </h3>
 
             {selectedSubjects.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-6 lg:py-8">
                 <div className="text-gray-400 dark:text-gray-500 mb-2">
-                  <Plus className="h-8 w-8 mx-auto" />
+                  <Plus className="h-6 w-6 sm:h-8 sm:w-8 mx-auto" />
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   No subjects selected yet
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-3 xl:grid-cols-4 gap-1 sm:gap-2">
                 {selectedSubjects.map(selectedSubject => {
                   const subject = availableSubjects.find(s => s.id === selectedSubject.subject_id);
                   if (!subject) return null;
@@ -281,28 +229,17 @@ export default function SubjectSelectionModal({
                   return (
                     <div
                       key={selectedSubject.subject_id}
-                      className="p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+                      className="aspect-square bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 p-0.5 sm:p-2 relative flex flex-col justify-center items-center text-center"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 dark:text-white text-sm">
-                            {subject.code}
-                          </h4>
-                          <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
-                            {subject.name}
-                          </p>
-                          <div className="flex items-center space-x-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            <Clock className="h-3 w-3" />
-                            <span>{subject.credits} Credits</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => unselectSubject(selectedSubject.subject_id)}
-                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                        >
-                          <X className="h-4 w-4 text-gray-400" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => unselectSubject(selectedSubject.subject_id)}
+                        className="absolute top-0 right-0 sm:top-1 sm:right-1 p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                      >
+                        <X className="h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 text-gray-400" />
+                      </button>
+                      <h4 className="font-medium text-gray-900 dark:text-white text-[8px] sm:text-xs leading-tight px-0.5">
+                        {subject.code}
+                      </h4>
                     </div>
                   );
                 })}
@@ -312,21 +249,21 @@ export default function SubjectSelectionModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+            <div className="text-sm text-gray-600 dark:text-gray-400 order-2 sm:order-1">
               {selectedSubjects.length} subject{selectedSubjects.length !== 1 ? 's' : ''} selected
             </div>
-            <div className="flex space-x-3">
+            <div className="flex space-x-3 w-full sm:w-auto order-1 sm:order-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                className="flex-1 sm:flex-none px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={onClose}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                className="flex-1 sm:flex-none px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
               >
                 Done
               </button>
