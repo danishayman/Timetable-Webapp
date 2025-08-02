@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { calculateRowIndex, calculateRowSpan } from '@/src/lib/utils';
+import { calculateRowIndex, calculateRowSpan, getClosestTimeSlot } from '@/src/lib/utils';
 import { TIME_SLOTS } from '@/src/lib/constants';
 
 interface TimetablePositionerProps {
@@ -44,11 +44,14 @@ export default function TimetablePositioner({
     columnIndex = dayOfWeek - 1;
   }
   
-  // Calculate row start based on start time
-  const rowStart = calculateRowIndex(startTime) + 1; // +1 because grid is 1-indexed
+  // Calculate row start based on start time (use closest time slot for better alignment)
+  const alignedStartTime = getClosestTimeSlot(startTime);
+  const alignedEndTime = getClosestTimeSlot(endTime);
+  
+  const rowStart = calculateRowIndex(alignedStartTime) + 1; // +1 because grid is 1-indexed
   
   // Calculate row span based on duration
-  const rowSpan = calculateRowSpan(startTime, endTime);
+  const rowSpan = Math.max(1, calculateRowSpan(alignedStartTime, alignedEndTime)); // Ensure minimum span of 1
   
   return (
     <div
@@ -56,11 +59,10 @@ export default function TimetablePositioner({
         gridColumn: `${columnIndex + 1} / span 1`, // Explicitly span only 1 column
         gridRow: `${rowStart} / span ${rowSpan}`,
         zIndex: 10, // Ensure it appears above grid lines
-        position: 'relative', // Change from absolute to relative
-        height: '100%',
-        width: '100%'
+        margin: '2px', // Add small margin for better visual separation
+        height: `calc(100% - 4px)`, // Account for margin
+        width: `calc(100% - 4px)` // Account for margin
       }}
-      className="p-1" // Add padding instead of using inset-0
     >
       {children}
     </div>

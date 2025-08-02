@@ -116,9 +116,9 @@ export default function TimetableGrid({
           
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {TIME_SLOTS.map((time, timeIndex) => (
-              <div key={time} className="flex min-h-[4rem] hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <div key={time} className="flex min-h-[6rem] hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 {/* Time column */}
-                <div className="w-20 flex-shrink-0 p-3 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+                <div className="w-20 flex-shrink-0 p-3 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
                   {formatTime(time)}
                 </div>
                 
@@ -212,7 +212,7 @@ export default function TimetableGrid({
               <div 
                 key={time} 
                 className={`
-                  p-2 h-14 flex items-center justify-center text-sm font-medium border-b border-r 
+                  p-3 h-20 flex items-center justify-center text-sm font-medium border-b border-r 
                   border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300
                   ${index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-750' : 'bg-white dark:bg-gray-800'}
                 `}
@@ -228,7 +228,7 @@ export default function TimetableGrid({
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${daysToShow.length}, 1fr)`,
-              gridTemplateRows: `repeat(${TIME_SLOTS.length}, 3.5rem)`, // 3.5rem = h-14
+              gridTemplateRows: `repeat(${TIME_SLOTS.length}, 5rem)`, // 5rem = h-20 for 1-hour slots
               minWidth: 0, // Prevent grid from expanding beyond container
               overflow: 'hidden' // Prevent content from spilling out
             }}
@@ -259,10 +259,10 @@ export default function TimetableGrid({
       </div>
       
       {/* Legend */}
-      <div className="mt-4 p-2 bg-white dark:bg-gray-800 rounded shadow text-sm">
+      <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-sm">
         <div className="flex items-center">
-          <span className="font-medium mr-2">Time Format:</span>
-          <span>30-minute time slots from 8:00 AM to 9:30 PM</span>
+          <span className="font-medium mr-2 text-gray-900 dark:text-white">Time Format:</span>
+          <span className="text-gray-600 dark:text-gray-300">1-hour time slots from 8:00 AM to 7:00 PM</span>
         </div>
       </div>
 

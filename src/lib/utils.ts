@@ -115,8 +115,8 @@ export function calculateDuration(startTime: string, endTime: string): number {
  */
 export function calculateRowSpan(startTime: string, endTime: string): number {
   const duration = calculateDuration(startTime, endTime);
-  // Each time slot is 30 minutes
-  return duration / 30;
+  // Each time slot is now 60 minutes (1 hour)
+  return duration / 60;
 }
 
 /**
@@ -190,4 +190,37 @@ export function getCurrentSemester(): string {
   } else {
     return `Fall ${year}`;
   }
+}
+
+/**
+ * Round a time to the nearest hour for better grid alignment
+ * @param time Time string (HH:MM)
+ * @returns Rounded time string
+ */
+export function roundTimeToNearestHour(time: string): string {
+  const minutes = timeToMinutes(time);
+  const hours = Math.round(minutes / 60);
+  return minutesToTime(hours * 60);
+}
+
+/**
+ * Get the closest time slot from TIME_SLOTS array
+ * @param time Time string (HH:MM)
+ * @returns Closest time slot
+ */
+export function getClosestTimeSlot(time: string): string {
+  const timeMinutes = timeToMinutes(time);
+  
+  let closestSlot = TIME_SLOTS[0];
+  let minDifference = Math.abs(timeToMinutes(closestSlot) - timeMinutes);
+  
+  for (const slot of TIME_SLOTS) {
+    const difference = Math.abs(timeToMinutes(slot) - timeMinutes);
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestSlot = slot;
+    }
+  }
+  
+  return closestSlot;
 } 
