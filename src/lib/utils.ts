@@ -23,6 +23,22 @@ export function formatTime(time: string): string {
 }
 
 /**
+ * Format a time string (HH:MM) to short 12-hour format (e.g., "9 AM", "2 PM")
+ * @param time Time string in 24-hour format (HH:MM)
+ * @returns Short formatted time string
+ */
+export function formatTimeShort(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const formattedHours = hours % 12 || 12;
+  // Only show minutes if they're not 00
+  if (minutes === 0) {
+    return `${formattedHours} ${period}`;
+  }
+  return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+}
+
+/**
  * Format a time range from start and end times
  * @param startTime Start time string (HH:MM)
  * @param endTime End time string (HH:MM)

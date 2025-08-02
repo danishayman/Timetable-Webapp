@@ -13,6 +13,7 @@ import useSubjectStore from "@/src/store/subjectStore";
 export default function Home() {
   const [showWeekends, setShowWeekends] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
+  const [mobileViewMode, setMobileViewMode] = useState<'day' | 'week'>('week');
   const { timetableSlots, initializeStore, generateTimetable, isGenerating } = useTimetableStore();
   const { selectedSubjects, initializeStore: initializeSubjectStore } = useSubjectStore();
 
@@ -56,6 +57,10 @@ export default function Home() {
     setIsSubjectModalOpen(false);
   };
 
+  const handleMobileViewModeChange = (mode: 'day' | 'week') => {
+    setMobileViewMode(mode);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50 dark:from-slate-900 dark:via-purple-950/20 dark:to-indigo-950 relative overflow-hidden">
       {/* Background Pattern */}
@@ -67,45 +72,45 @@ export default function Home() {
       
       {/* Floating Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-purple-200/10 dark:bg-purple-600/10 rounded-full blur-xl"></div>
-        <div className="absolute top-40 right-20 w-24 h-24 bg-indigo-200/10 dark:bg-indigo-600/10 rounded-full blur-xl"></div>
-        <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-purple-300/10 dark:bg-purple-500/10 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-20 right-1/3 w-28 h-28 bg-violet-200/10 dark:bg-violet-600/10 rounded-full blur-xl"></div>
+        <div className="absolute top-10 sm:top-20 left-4 sm:left-10 w-20 h-20 sm:w-32 sm:h-32 bg-purple-200/10 dark:bg-purple-600/10 rounded-full blur-xl"></div>
+        <div className="absolute top-20 sm:top-40 right-8 sm:right-20 w-16 h-16 sm:w-24 sm:h-24 bg-indigo-200/10 dark:bg-indigo-600/10 rounded-full blur-xl"></div>
+        <div className="absolute bottom-16 sm:bottom-32 left-1/4 w-24 h-24 sm:w-40 sm:h-40 bg-purple-300/10 dark:bg-purple-500/10 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-8 sm:bottom-20 right-1/3 w-20 h-20 sm:w-28 sm:h-28 bg-violet-200/10 dark:bg-violet-600/10 rounded-full blur-xl"></div>
       </div>
 
       {/* Content */}
       <div className="relative z-10">
         {/* Hero Section */}
-        <div className="container mx-auto px-6 py-16">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-2xl mb-8 shadow-lg">
-              <svg className="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
+          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-purple-100 dark:bg-purple-900/30 rounded-2xl mb-6 sm:mb-8 shadow-lg">
+              <svg className="w-8 h-8 sm:w-10 sm:h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h1 className="text-5xl font-bold mb-6 text-gray-900 dark:text-white">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white px-4">
               Smart Timetable
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed px-4">
               Effortlessly organize your academic schedule with intelligent clash detection and seamless subject management
             </p>
           </div>
 
       {/* Timetable Section */}
-      <div className="mb-16">
-        <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 sm:mb-12 lg:mb-16">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Your Schedule</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Your Schedule</h2>
             {selectedSubjects.length > 0 && (
               <p className="text-purple-600 dark:text-purple-400 mt-2 font-medium">
                 {selectedSubjects.length} subject{selectedSubjects.length !== 1 ? 's' : ''} selected
               </p>
             )}
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <button
               onClick={handleOpenSubjectModal}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 sm:px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -126,17 +131,17 @@ export default function Home() {
 
         {/* Selected Subjects Display */}
         {selectedSubjects.length > 0 && (
-          <div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-purple-100 dark:border-purple-900/30 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="mb-4 sm:mb-6 p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-2xl border border-purple-100 dark:border-purple-900/30 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Selected Subjects
                 </h3>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                   {selectedSubjects.map((subject) => (
                     <span
                       key={subject.subject_id}
-                      className="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+                      className="inline-flex items-center px-3 sm:px-4 py-2 rounded-xl text-sm font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
                     >
                       {subject.subject_code}
                     </span>
@@ -145,7 +150,7 @@ export default function Home() {
               </div>
               <button
                 onClick={handleOpenSubjectModal}
-                className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 font-medium px-4 py-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                className="w-full sm:w-auto text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 font-medium px-4 py-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors text-center"
               >
                 Manage
               </button>
@@ -154,45 +159,51 @@ export default function Home() {
         )}
 
         {/* Timetable Grid */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           {isGenerating ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="flex items-center space-x-4">
-                <div className="animate-spin rounded-full h-10 w-10 border-4 border-purple-200 border-t-purple-600"></div>
-                <span className="text-gray-600 dark:text-gray-300 font-medium text-lg">Updating timetable...</span>
+            <div className="flex items-center justify-center py-12 sm:py-16">
+              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-4 border-purple-200 border-t-purple-600"></div>
+                <span className="text-gray-600 dark:text-gray-300 font-medium text-base sm:text-lg text-center">Updating timetable...</span>
               </div>
             </div>
           ) : (
-            <TimetableGrid showWeekends={showWeekends}>
-              {timetableSlots.map((slot) => (
-                <TimetablePositioner
-                  key={slot.id}
-                  dayOfWeek={slot.day_of_week}
-                  startTime={slot.start_time}
-                  endTime={slot.end_time}
-                  showWeekends={showWeekends}
-                >
-                  <ClassBlock slot={slot} />
-                </TimetablePositioner>
-              ))}
-            </TimetableGrid>
+            <div className="w-full">
+              <TimetableGrid 
+                showWeekends={showWeekends}
+                mobileViewMode={mobileViewMode}
+                onMobileViewModeChange={handleMobileViewModeChange}
+              >
+                {timetableSlots.map((slot) => (
+                  <TimetablePositioner
+                    key={slot.id}
+                    dayOfWeek={slot.day_of_week}
+                    startTime={slot.start_time}
+                    endTime={slot.end_time}
+                    showWeekends={showWeekends}
+                  >
+                    <ClassBlock slot={slot} />
+                  </TimetablePositioner>
+                ))}
+              </TimetableGrid>
+            </div>
           )}
         </div>
 
         {!isGenerating && timetableSlots.length === 0 && (
-          <div className="text-center mt-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl mb-6">
-              <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center mt-8 sm:mt-12 px-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl mb-4 sm:mb-6">
+              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3">
               {selectedSubjects.length === 0 
                 ? "Ready to build your schedule?" 
                 : "No classes scheduled"
               }
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
               {selectedSubjects.length === 0 
                 ? "Start by selecting your subjects to create a personalized timetable."
                 : "No class schedules are available for your selected subjects at the moment."
@@ -200,7 +211,7 @@ export default function Home() {
             </p>
             <button
               onClick={handleOpenSubjectModal}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 sm:px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               {selectedSubjects.length === 0 ? "Browse Subjects" : "Manage Subjects"}
             </button>
@@ -209,15 +220,15 @@ export default function Home() {
       </div>
 
       {/* Features Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-        <div className="group bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-6 group-hover:scale-110 transition-transform">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
+        <div className="group bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
             <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Browse Subjects</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Browse Subjects</h3>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 leading-relaxed">
             Explore our comprehensive catalog of courses and find the perfect subjects for your academic journey.
           </p>
           <button
@@ -231,14 +242,14 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="group bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-6 group-hover:scale-110 transition-transform">
+        <div className="group bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
             <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Manage Timetable</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Manage Timetable</h3>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 leading-relaxed">
             View and organize your complete schedule with intelligent clash detection and easy modifications.
           </p>
           <Link 
@@ -252,15 +263,15 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="group bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-6 group-hover:scale-110 transition-transform">
+        <div className="group bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 hover:-translate-y-1 sm:col-span-2 lg:col-span-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
             <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Admin Panel</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Admin Panel</h3>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 leading-relaxed">
             Administrative access to manage subjects, schedules, and tutorial groups across the system.
           </p>
           <Link 
@@ -276,10 +287,10 @@ export default function Home() {
       </div>
 
       {/* Debug Section */}
-      <div className="text-center">
+      <div className="text-center px-4">
         <button 
           onClick={handleTestConnection}
-          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium py-3 px-6 rounded-xl transition-colors border border-gray-300 dark:border-gray-600"
+          className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium py-3 px-4 sm:px-6 rounded-xl transition-colors border border-gray-300 dark:border-gray-600"
         >
           Test Database Connection
         </button>

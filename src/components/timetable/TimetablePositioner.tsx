@@ -10,6 +10,7 @@ interface TimetablePositionerProps {
   startTime: string;
   endTime: string;
   showWeekends?: boolean;
+  compactMode?: boolean;
 }
 
 /**
@@ -21,7 +22,8 @@ export default function TimetablePositioner({
   dayOfWeek,
   startTime,
   endTime,
-  showWeekends = false
+  showWeekends = false,
+  compactMode = false
 }: TimetablePositionerProps) {
   // If the day is not visible (weekend when showWeekends is false), don't render
   if (!showWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
@@ -59,15 +61,18 @@ export default function TimetablePositioner({
         gridColumn: `${columnIndex + 1} / span 1`, // Explicitly span only 1 column
         gridRow: `${rowStart} / span ${rowSpan}`,
         zIndex: 10, // Ensure it appears above grid lines
-        margin: '2px', // Add small margin for better visual separation
-        height: `calc(100% - 4px)`, // Account for margin
-        width: `calc(100% - 4px)`, // Account for margin
+        margin: compactMode ? '1px' : '2px', // Smaller margin for compact mode
+        height: `calc(100% - ${compactMode ? '2px' : '4px'})`, // Account for margin
+        width: `calc(100% - ${compactMode ? '2px' : '4px'})`, // Account for margin
         minWidth: 0, // Allow shrinking
         overflow: 'hidden', // Prevent any content from overflowing
         position: 'relative' // Ensure proper positioning context
       }}
     >
-      {children}
+      {React.isValidElement(children) 
+        ? React.cloneElement(children, { compactMode } as any)
+        : children
+      }
     </div>
   );
 } 
