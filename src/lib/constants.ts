@@ -51,28 +51,28 @@ export const TIME_SLOTS = [
 ];
 
 /**
- * Class types with their display names and colors
+ * Class types with their display names and colors - Purple theme
  */
 export const CLASS_TYPES = {
   lecture: {
     name: 'Lecture',
-    color: '#3b82f6' // blue-500
+    color: '#8B5CF6' // purple-500
   },
   tutorial: {
     name: 'Tutorial',
-    color: '#10b981' // emerald-500
+    color: '#A855F7' // purple-600
   },
   lab: {
     name: 'Lab',
-    color: '#f59e0b' // amber-500
+    color: '#9333EA' // violet-600
   },
   practical: {
     name: 'Practical',
-    color: '#8b5cf6' // violet-500
+    color: '#7C3AED' // violet-500
   },
   custom: {
     name: 'Custom',
-    color: '#ec4899' // pink-500
+    color: '#6D28D9' // violet-700
   }
 };
 

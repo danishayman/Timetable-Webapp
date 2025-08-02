@@ -88,7 +88,7 @@ export default function TimetableGrid({
                 onClick={() => setCurrentDayIndex(index)}
                 className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   currentDayIndex === index
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    ? 'border-purple-500 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
               >
@@ -180,9 +180,9 @@ export default function TimetableGrid({
     <div className="w-full overflow-x-auto">
       <div className="min-w-[600px] md:min-w-[768px]">
         {/* Timetable Header */}
-        <div className="grid grid-cols-[60px_1fr] bg-white dark:bg-gray-800 rounded-t-lg shadow">
+        <div className="grid grid-cols-[80px_1fr] bg-white dark:bg-gray-800 rounded-t-2xl shadow-sm border border-gray-200 dark:border-gray-700">
           {/* Empty cell for time column */}
-          <div className="p-2 border-b border-r border-gray-200 dark:border-gray-700"></div>
+          <div className="p-3 border-b border-r border-gray-200 dark:border-gray-700 bg-purple-50 dark:bg-purple-900/20"></div>
           
           {/* Day columns */}
           <div 
@@ -195,26 +195,26 @@ export default function TimetableGrid({
             {daysToShow.map((day, index) => (
               <div 
                 key={day} 
-                className="p-2 text-center font-semibold border-b border-r last:border-r-0 border-gray-200 dark:border-gray-700"
+                className="p-3 text-center font-semibold text-gray-900 dark:text-white border-b border-r last:border-r-0 border-gray-200 dark:border-gray-700 bg-purple-50 dark:bg-purple-900/20"
               >
-                <span className="hidden md:inline">{day}</span>
-                <span className="md:hidden">{shortDaysToShow[index]}</span>
+                <span className="hidden md:inline text-sm">{day}</span>
+                <span className="md:hidden text-sm">{shortDaysToShow[index]}</span>
               </div>
             ))}
           </div>
         </div>
         
         {/* Timetable Body */}
-        <div className="grid grid-cols-[60px_1fr] bg-white dark:bg-gray-800 rounded-b-lg shadow">
+        <div className="grid grid-cols-[80px_1fr] bg-white dark:bg-gray-800 rounded-b-2xl shadow-sm border-l border-r border-b border-gray-200 dark:border-gray-700">
           {/* Time slots */}
           <div className="flex flex-col">
             {TIME_SLOTS.map((time, index) => (
               <div 
                 key={time} 
                 className={`
-                  p-1 h-12 flex items-center justify-center text-xs border-b border-r 
-                  border-gray-200 dark:border-gray-700
-                  ${index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-750' : ''}
+                  p-2 h-14 flex items-center justify-center text-sm font-medium border-b border-r 
+                  border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300
+                  ${index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-750' : 'bg-white dark:bg-gray-800'}
                 `}
               >
                 {formatTime(time)}
@@ -228,7 +228,7 @@ export default function TimetableGrid({
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${daysToShow.length}, 1fr)`,
-              gridTemplateRows: `repeat(${TIME_SLOTS.length}, 3rem)`, // 3rem = h-12
+              gridTemplateRows: `repeat(${TIME_SLOTS.length}, 3.5rem)`, // 3.5rem = h-14
               minWidth: 0, // Prevent grid from expanding beyond container
               overflow: 'hidden' // Prevent content from spilling out
             }}
@@ -240,8 +240,8 @@ export default function TimetableGrid({
                   <div 
                     key={`cell-${dayIndex}-${timeIndex}`} 
                     className={`
-                      border-b border-r last:border-r-0 border-gray-200 dark:border-gray-700
-                      ${timeIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-750' : ''}
+                      border-b border-r last:border-r-0 border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors
+                      ${timeIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-750' : 'bg-white dark:bg-gray-800'}
                     `}
                     style={{
                       gridColumn: dayIndex + 1,

@@ -22,10 +22,10 @@ export default function ClassBlock({
 }: ClassBlockProps) {
   const [showDetails, setShowDetails] = useState(false);
   
-  // Determine the color for the block
+  // Determine the color for the block - using purple theme
   const blockColor = slot.color || 
     (slot.type && CLASS_TYPES[slot.type]?.color) || 
-    '#6b7280'; // gray-500 as fallback
+    '#8B5CF6'; // purple-500 as fallback instead of gray
   
   // Determine text color based on background color (always white for now)
   const textColor = 'white';
@@ -46,10 +46,10 @@ export default function ClassBlock({
   return (
     <div 
       className={`
-        rounded shadow-sm overflow-hidden flex flex-col h-full w-full
-        transition-all duration-200 cursor-pointer
+        rounded-lg shadow-md overflow-hidden flex flex-col h-full w-full
+        transition-all duration-200 cursor-pointer hover:shadow-lg transform hover:-translate-y-0.5
         ${borderStyle}
-        ${showDetails ? 'z-50 shadow-lg' : ''}
+        ${showDetails ? 'z-50 shadow-xl ring-2 ring-purple-300 dark:ring-purple-600' : ''}
       `}
       style={{ 
         backgroundColor: blockColor,
@@ -59,17 +59,17 @@ export default function ClassBlock({
       onClick={handleClick}
     >
       {/* Header: Subject code and type */}
-      <div className="flex justify-between items-start px-2 pt-2">
-        <div className="font-medium text-sm truncate">
+      <div className="flex justify-between items-start px-3 pt-3">
+        <div className="font-semibold text-sm truncate">
           {slot.subject_code}
         </div>
-        <div className="text-xs bg-white/20 px-1 rounded">
+        <div className="text-xs bg-white/25 px-2 py-1 rounded-md font-medium">
           {slot.type.charAt(0).toUpperCase() + slot.type.slice(1)}
         </div>
       </div>
       
       {/* Subject name */}
-      <div className="text-xs truncate mt-1 px-2">
+      <div className="text-xs truncate mt-2 px-3 opacity-90 font-medium">
         {slot.subject_name}
         {isClashing && (
           <span className="inline-block ml-1" title="Clash detected">⚠️</span>
@@ -77,26 +77,28 @@ export default function ClassBlock({
       </div>
       
       {/* Venue (always visible) */}
-      <div className="text-xs opacity-80 truncate mt-auto px-2 pb-2">
-        {slot.venue}
+      <div className="text-xs opacity-80 truncate mt-auto px-3 pb-3 font-medium">
+        📍 {slot.venue}
       </div>
       
       {/* Expanded details (visible on click) */}
       {showDetails && (
-        <div className="mt-2 pt-2 border-t border-white/20 text-xs space-y-1 animate-fade-in px-2 pb-2">
-          <div>
-            <span className="opacity-80">Time:</span> {formatTimeRange(slot.start_time, slot.end_time)}
+        <div className="mt-2 pt-3 border-t border-white/25 text-xs space-y-2 animate-fade-in px-3 pb-3 bg-black/10 rounded-b-lg">
+          <div className="flex items-center">
+            <span className="opacity-80 font-medium">🕒 Time:</span> 
+            <span className="ml-2">{formatTimeRange(slot.start_time, slot.end_time)}</span>
           </div>
           
           {slot.instructor && (
-            <div>
-              <span className="opacity-80">Instructor:</span> {slot.instructor}
+            <div className="flex items-center">
+              <span className="opacity-80 font-medium">👨‍🏫 Instructor:</span> 
+              <span className="ml-2">{slot.instructor}</span>
             </div>
           )}
           
           {isClashing && (
-            <div className="text-red-200 font-medium">
-              ⚠️ Clash detected
+            <div className="text-red-200 font-medium flex items-center">
+              ⚠️ <span className="ml-1">Clash detected</span>
             </div>
           )}
         </div>

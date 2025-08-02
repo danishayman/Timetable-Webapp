@@ -57,60 +57,69 @@ export default function Home() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4">Student Timetable App</h1>
-        <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-          Create and manage your class schedule with ease
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Hero Section */}
+      <div className="container mx-auto px-6 py-16">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-2xl mb-8">
+            <svg className="w-10 h-10 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h1 className="text-5xl font-bold mb-6 text-gray-900 dark:text-white">
+            Smart Timetable
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+            Effortlessly organize your academic schedule with intelligent clash detection and seamless subject management
+          </p>
+        </div>
 
-      {/* Timetable Preview Section */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-6">
+      {/* Timetable Section */}
+      <div className="mb-16">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold">Your Timetable</h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Your Schedule</h2>
             {selectedSubjects.length > 0 && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-purple-600 dark:text-purple-400 mt-2 font-medium">
                 {selectedSubjects.length} subject{selectedSubjects.length !== 1 ? 's' : ''} selected
               </p>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <button
               onClick={handleOpenSubjectModal}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Add Subjects
             </button>
-            <label className="flex items-center space-x-2 cursor-pointer">
+            <label className="flex items-center space-x-3 cursor-pointer text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 checked={showWeekends}
                 onChange={(e) => setShowWeekends(e.target.checked)}
-                className="form-checkbox h-4 w-4 text-blue-500"
+                className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
               />
-              <span className="text-sm">Show Weekends</span>
+              <span className="font-medium">Show Weekends</span>
             </label>
           </div>
         </div>
 
-        {/* Selected Subjects List */}
+        {/* Selected Subjects Display */}
         {selectedSubjects.length > 0 && (
-          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-purple-100 dark:border-purple-900/30 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
-                  Selected Subjects:
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                  Selected Subjects
                 </h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                   {selectedSubjects.map((subject) => (
                     <span
                       key={subject.subject_id}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+                      className="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
                     >
                       {subject.subject_code}
                     </span>
@@ -119,7 +128,7 @@ export default function Home() {
               </div>
               <button
                 onClick={handleOpenSubjectModal}
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-medium"
+                className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 font-medium px-4 py-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
               >
                 Manage
               </button>
@@ -128,12 +137,12 @@ export default function Home() {
         )}
 
         {/* Timetable Grid */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
           {isGenerating ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex items-center space-x-3">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                <span className="text-gray-600 dark:text-gray-300">Updating timetable...</span>
+            <div className="flex items-center justify-center py-16">
+              <div className="flex items-center space-x-4">
+                <div className="animate-spin rounded-full h-10 w-10 border-4 border-purple-200 border-t-purple-600"></div>
+                <span className="text-gray-600 dark:text-gray-300 font-medium text-lg">Updating timetable...</span>
               </div>
             </div>
           ) : (
@@ -154,61 +163,97 @@ export default function Home() {
         </div>
 
         {!isGenerating && timetableSlots.length === 0 && (
-          <div className="text-center mt-6">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+          <div className="text-center mt-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl mb-6">
+              <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
               {selectedSubjects.length === 0 
-                ? "Your timetable is empty. Start by adding subjects to create your schedule."
-                : "No class schedules available for your selected subjects."
+                ? "Ready to build your schedule?" 
+                : "No classes scheduled"
+              }
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              {selectedSubjects.length === 0 
+                ? "Start by selecting your subjects to create a personalized timetable."
+                : "No class schedules are available for your selected subjects at the moment."
               }
             </p>
             <button
               onClick={handleOpenSubjectModal}
-              className="inline-block bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              {selectedSubjects.length === 0 ? "Browse and Add Subjects" : "Manage Subjects"}
+              {selectedSubjects.length === 0 ? "Browse Subjects" : "Manage Subjects"}
             </button>
           </div>
         )}
       </div>
 
-      {/* Quick Actions Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-4">Browse Subjects</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            Search and explore available courses and their schedules.
+      {/* Features Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className="group bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-6 group-hover:scale-110 transition-transform">
+            <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Browse Subjects</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+            Explore our comprehensive catalog of courses and find the perfect subjects for your academic journey.
           </p>
           <button
             onClick={handleOpenSubjectModal}
-            className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors"
+            className="text-purple-600 dark:text-purple-400 font-medium hover:text-purple-800 dark:hover:text-purple-200 flex items-center gap-2 group-hover:gap-3 transition-all"
           >
-            View Subjects
+            Explore Subjects
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-4">Manage Timetable</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            View and edit your complete timetable with clash detection.
+        <div className="group bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-6 group-hover:scale-110 transition-transform">
+            <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Manage Timetable</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+            View and organize your complete schedule with intelligent clash detection and easy modifications.
           </p>
           <Link 
             href="/timetable" 
-            className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors"
+            className="text-purple-600 dark:text-purple-400 font-medium hover:text-purple-800 dark:hover:text-purple-200 flex items-center gap-2 group-hover:gap-3 transition-all"
           >
             Open Timetable
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-4">Admin Panel</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            Manage subjects, schedules, and tutorial groups.
+        <div className="group bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl mb-6 group-hover:scale-110 transition-transform">
+            <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Admin Panel</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+            Administrative access to manage subjects, schedules, and tutorial groups across the system.
           </p>
           <Link 
             href="/admin" 
-            className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors"
+            className="text-purple-600 dark:text-purple-400 font-medium hover:text-purple-800 dark:hover:text-purple-200 flex items-center gap-2 group-hover:gap-3 transition-all"
           >
             Admin Access
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
       </div>
@@ -217,10 +262,11 @@ export default function Home() {
       <div className="text-center">
         <button 
           onClick={handleTestConnection}
-          className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium py-2 px-4 rounded transition-colors"
+          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium py-3 px-6 rounded-xl transition-colors border border-gray-300 dark:border-gray-600"
         >
-          Test Supabase Connection
+          Test Database Connection
         </button>
+      </div>
       </div>
 
       {/* Subject Selection Modal */}
