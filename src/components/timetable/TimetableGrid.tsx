@@ -7,6 +7,7 @@ import { TimetableGridSkeleton } from '../common/SkeletonLoaders';
 import { LoadingOverlay } from '../common/Loading';
 import { useIsMobile } from '@/src/hooks/useResponsive';
 import { EmptyStateValidator } from '@/src/lib/inputValidation';
+import { Clash } from '@/src/types/timetable';
 
 interface TimetableGridProps {
   children?: React.ReactNode;
@@ -17,6 +18,7 @@ interface TimetableGridProps {
   compactMode?: boolean; // New prop for mobile compact view
   mobileViewMode?: 'day' | 'week'; // New prop for mobile view mode
   onMobileViewModeChange?: (mode: 'day' | 'week') => void; // Callback for view mode change
+  clashes?: Clash[]; // Array of clashes for visual indicators
 }
 
 /**
@@ -31,11 +33,93 @@ export default function TimetableGrid({
   loadingMessage = 'Loading timetable...',
   compactMode = false,
   mobileViewMode = 'day',
-  onMobileViewModeChange
+  onMobileViewModeChange,
+  clashes = []
 }: TimetableGridProps) {
   // ALL HOOKS MUST BE CALLED AT THE TOP - BEFORE ANY CONDITIONAL RETURNS
   const [currentDayIndex, setCurrentDayIndex] = React.useState(0);
   const isMobile = useIsMobile();
+  
+  // Helper function to check if a time slot has clashes
+  const hasClashInTimeSlot = (dayOfWeek: number, timeSlot: string): boolean => {
+    return clashes.some(clash => 
+      (clash.slot1.day_of_week === dayOfWeek && clash.slot1.start_time === timeSlot) ||
+      (clash.slot2.day_of_week === dayOfWeek && clash.slot2.start_time === timeSlot)
+    );
+  };
+
+  // Helper function to get clashing slots for a specific slot
+  const getClashingSlots = (targetSlot: any): string[] => {
+    const clashingSlotIds: string[] = [];
+    
+    clashes.forEach(clash => {
+      if (clash.slot1.id === targetSlot.id) {
+        clashingSlotIds.push(clash.slot2.id);
+      } else if (clash.slot2.id === targetSlot.id) {
+        clashingSlotIds.push(clash.slot1.id);
+      }
+    });
+    
+    return clashingSlotIds;
+  };
+
+  // Helper function to calculate clash position for overlapping slots
+  const getClashPosition = (slotId: string, allChildren: React.ReactElement[]): { index: number, total: number } => {
+    // Find all slots that clash with this one
+    const targetSlot = allChildren.find(child => {
+      const childProps = child.props as any;
+      return childProps.children?.props?.slot?.id === slotId;
+    });
+    
+    if (!targetSlot) return { index: 0, total: 1 };
+    
+    const targetSlotProps = targetSlot.props as any;
+    const targetSlotData = targetSlotProps.children?.props?.slot;
+    
+    if (!targetSlotData) return { index: 0, total: 1 };
+    
+    // Find all children that overlap with this slot
+    const overlappingSlots = allChildren.filter(child => {
+      const childProps = child.props as any;
+      const childSlotData = childProps.children?.props?.slot;
+      
+      if (!childSlotData || childSlotData.id === slotId) return false;
+      
+      // Check if they overlap in time and are on the same day
+      return (
+        childSlotData.day_of_week === targetSlotData.day_of_week &&
+        childSlotData.start_time < targetSlotData.end_time &&
+        childSlotData.end_time > targetSlotData.start_time
+      );
+    });
+    
+    // Include the target slot itself
+    const allOverlappingSlots = [targetSlot, ...overlappingSlots];
+    
+    // Sort by start time, then by slot ID for consistent ordering
+    allOverlappingSlots.sort((a, b) => {
+      const aSlot = a.props.children?.props?.slot;
+      const bSlot = b.props.children?.props?.slot;
+      
+      if (!aSlot || !bSlot) return 0;
+      
+      if (aSlot.start_time !== bSlot.start_time) {
+        return aSlot.start_time.localeCompare(bSlot.start_time);
+      }
+      
+      return aSlot.id.localeCompare(bSlot.id);
+    });
+    
+    const index = allOverlappingSlots.findIndex(slot => {
+      const slotData = slot.props.children?.props?.slot;
+      return slotData?.id === slotId;
+    });
+    
+    return {
+      index: index >= 0 ? index : 0,
+      total: allOverlappingSlots.length
+    };
+  };
   
   // Show skeleton during initial load
   if (isLoading && !children) {
@@ -159,6 +243,7 @@ export default function TimetableGrid({
               // Filter children to get classes for current day and time slot
               const currentDayOfWeek = showWeekends ? currentDayIndex : currentDayIndex + 1;
               const currentTimeSlot = time;
+              const hasClash = hasClashInTimeSlot(currentDayOfWeek, currentTimeSlot);
               
               const dayClasses = React.Children.toArray(children).filter((child) => {
                 if (!React.isValidElement(child)) return false;
@@ -170,10 +255,13 @@ export default function TimetableGrid({
               });
 
               return (
-                <div key={time} className="flex min-h-[4rem] hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors">
+                <div key={time} className={`flex min-h-[4rem] hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors ${hasClash ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
                   {/* Time column */}
-                  <div className="w-16 sm:w-20 flex-shrink-0 p-2 sm:p-3 text-xs sm:text-sm font-medium text-white bg-slate-600 dark:bg-slate-700 border-r border-gray-200 dark:border-gray-700 flex items-center justify-center">
+                  <div className="w-16 sm:w-20 flex-shrink-0 p-2 sm:p-3 text-xs sm:text-sm font-medium text-white bg-slate-600 dark:bg-slate-700 border-r border-gray-200 dark:border-gray-700 flex items-center justify-center relative">
                     {formatTimeShort(time)}
+                    {hasClash && (
+                      <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" title="Clash detected in this time slot"></div>
+                    )}
                   </div>
                   
                   {/* Content area */}
@@ -188,7 +276,7 @@ export default function TimetableGrid({
                       </div>
                     ) : (
                       <div className="text-gray-400 dark:text-gray-500 text-sm italic">
-                        No classes scheduled
+                        {hasClash ? 'Clash detected' : 'No classes scheduled'}
                       </div>
                     )}
                   </div>
@@ -288,31 +376,55 @@ export default function TimetableGrid({
                   {/* Grid lines */}
                   {daysToShow.map((_, dayIndex) => (
                     <React.Fragment key={`col-${dayIndex}`}>
-                      {TIME_SLOTS.map((_, timeIndex) => (
-                        <div 
-                          key={`cell-${dayIndex}-${timeIndex}`} 
-                          className={`
-                            border-b border-r last:border-r-0 border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors
-                            ${timeIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-750' : 'bg-white dark:bg-gray-800'}
-                          `}
-                          style={{
-                            gridColumn: dayIndex + 1,
-                            gridRow: timeIndex + 1
-                          }}
-                        ></div>
-                      ))}
+                      {TIME_SLOTS.map((time, timeIndex) => {
+                        const currentDayOfWeek = showWeekends ? dayIndex : dayIndex + 1;
+                        const hasClash = hasClashInTimeSlot(currentDayOfWeek, time);
+                        
+                        return (
+                          <div 
+                            key={`cell-${dayIndex}-${timeIndex}`} 
+                            className={`
+                              border-b border-r last:border-r-0 border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors relative
+                              ${timeIndex % 2 === 0 ? 'bg-gray-50 dark:bg-gray-750' : 'bg-white dark:bg-gray-800'}
+                              ${hasClash ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : ''}
+                            `}
+                            style={{
+                              gridColumn: dayIndex + 1,
+                              gridRow: timeIndex + 1
+                            }}
+                          >
+                            {hasClash && (
+                              <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full" title="Clash detected in this time slot"></div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </React.Fragment>
                   ))}
                   
                   {/* Children (class blocks, etc.) */}
                   {React.Children.map(children, (child) => {
                     if (React.isValidElement(child)) {
-                      // Clone child and add compactMode prop for mobile week view
-                      const childProps = child.props as any;
-                      return React.cloneElement(child, {
-                        ...childProps,
-                        compactMode: true
-                      });
+                      const slotId = child.props.children?.props?.slot?.id;
+                      if (slotId) {
+                        const clashPosition = getClashPosition(slotId, React.Children.toArray(children) as React.ReactElement[]);
+                        const clashingSlots = getClashingSlots(child.props.children?.props?.slot);
+                        
+                        // Clone child and add compactMode and clash props for mobile week view
+                        return React.cloneElement(child, {
+                          ...child.props,
+                          compactMode: true,
+                          clashIndex: clashPosition.index,
+                          clashTotal: clashPosition.total,
+                          isClashing: clashingSlots.length > 0
+                        });
+                      } else {
+                        // Clone child and add compactMode prop for mobile week view
+                        return React.cloneElement(child, {
+                          ...child.props,
+                          compactMode: true
+                        });
+                      }
                     }
                     return child;
                   })}
@@ -395,24 +507,51 @@ export default function TimetableGrid({
             {/* Grid lines */}
             {daysToShow.map((_, dayIndex) => (
               <React.Fragment key={`col-${dayIndex}`}>
-                {TIME_SLOTS.map((_, timeIndex) => (
-                  <div 
-                    key={`cell-${dayIndex}-${timeIndex}`} 
-                    className={`
-                      border-b border-r last:border-r-0 border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors
-                      ${timeIndex % 2 === 0 ? 'bg-gray-100 dark:bg-gray-750' : 'bg-gray-50 dark:bg-gray-800'}
-                    `}
-                    style={{
-                      gridColumn: dayIndex + 1,
-                      gridRow: timeIndex + 1
-                    }}
-                  ></div>
-                ))}
+                {TIME_SLOTS.map((time, timeIndex) => {
+                  const currentDayOfWeek = showWeekends ? dayIndex : dayIndex + 1;
+                  const hasClash = hasClashInTimeSlot(currentDayOfWeek, time);
+                  
+                  return (
+                    <div 
+                      key={`cell-${dayIndex}-${timeIndex}`} 
+                      className={`
+                        border-b border-r last:border-r-0 border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors relative
+                        ${timeIndex % 2 === 0 ? 'bg-gray-100 dark:bg-gray-750' : 'bg-gray-50 dark:bg-gray-800'}
+                        ${hasClash ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : ''}
+                      `}
+                      style={{
+                        gridColumn: dayIndex + 1,
+                        gridRow: timeIndex + 1
+                      }}
+                    >
+                      {hasClash && (
+                        <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" title="Clash detected in this time slot"></div>
+                      )}
+                    </div>
+                  );
+                })}
               </React.Fragment>
             ))}
             
             {/* Children (class blocks, etc.) */}
-            {children}
+            {React.Children.map(children, (child) => {
+              if (React.isValidElement(child)) {
+                const slotId = child.props.children?.props?.slot?.id;
+                if (slotId) {
+                  const clashPosition = getClashPosition(slotId, React.Children.toArray(children) as React.ReactElement[]);
+                  const clashingSlots = getClashingSlots(child.props.children?.props?.slot);
+                  
+                  // Clone child and add clash positioning props
+                  return React.cloneElement(child, {
+                    ...child.props,
+                    clashIndex: clashPosition.index,
+                    clashTotal: clashPosition.total,
+                    isClashing: clashingSlots.length > 0
+                  });
+                }
+              }
+              return child;
+            })}
           </div>
         </div>
       </div>

@@ -65,7 +65,10 @@ export default function ClassBlock({
           padding: '2px'
         }}
         onClick={handleClick}
-        title={`${slot.subject_code} - ${slot.subject_name}\n${formatTimeRange(slot.start_time, slot.end_time)}\n${slot.venue}`}
+        title={isClashing 
+          ? `⚠️ CLASH DETECTED - ${slot.subject_code} - ${slot.subject_name}\n${formatTimeRange(slot.start_time, slot.end_time)}\n${slot.venue}`
+          : `${slot.subject_code} - ${slot.subject_name}\n${formatTimeRange(slot.start_time, slot.end_time)}\n${slot.venue}`
+        }
       >
         <div className="text-center leading-tight">
           <div className="font-bold text-xs truncate">
@@ -97,41 +100,57 @@ export default function ClassBlock({
         overflow: 'hidden' // Hide any overflow
       }}
       onClick={handleClick}
+      title={isClashing 
+        ? `⚠️ CLASH DETECTED - ${slot.subject_code} - ${slot.subject_name}`
+        : `${slot.subject_code} - ${slot.subject_name}`
+      }
     >
-      {/* Header: Subject code and type */}
-      <div className="flex justify-between items-start px-2 sm:px-3 pt-2 sm:pt-3 min-w-0">
-        <div className="font-semibold text-xs sm:text-sm truncate flex-1 min-w-0 mr-2">
-          {slot.subject_code}
-        </div>
-        {/* Only show type indicator on desktop */}
-        {!isMobile && (
-          <div className="text-xs bg-white/25 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium flex-shrink-0">
-            {slot.type.charAt(0).toUpperCase() + slot.type.slice(1)}
+      {isClashing ? (
+        // Simplified layout for clashing slots - only show subject code
+        <div className="flex flex-col items-center justify-center h-full px-2 py-2 text-center">
+          <div className="font-bold text-xs sm:text-sm truncate">
+            {slot.subject_code}
           </div>
-        )}
-      </div>
-      
-      {/* Subject name - with word wrapping for long names */}
-      <div className="px-2 sm:px-3 mt-1 sm:mt-2 flex-1 min-h-0 overflow-hidden">
-        <div 
-          className="text-xs opacity-90 font-medium leading-tight"
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: showDetails ? 'unset' : 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            wordBreak: 'break-word',
-            hyphens: 'auto'
-          }}
-          title={slot.subject_name} // Show full name on hover
-        >
-          {slot.subject_name}
-          {isClashing && (
-            <span className="inline-block ml-1" title="Clash detected">⚠️</span>
-          )}
+          <div className="text-xs opacity-80 mt-1">
+            ⚠️
+          </div>
         </div>
-      </div>
-      
+      ) : (
+        // Full layout for non-clashing slots
+        <>
+          {/* Header: Subject code and type */}
+          <div className="flex justify-between items-start px-2 sm:px-3 pt-2 sm:pt-3 min-w-0">
+            <div className="font-semibold text-xs sm:text-sm truncate flex-1 min-w-0 mr-2">
+              {slot.subject_code}
+            </div>
+            {/* Only show type indicator on desktop */}
+            {!isMobile && (
+              <div className="text-xs bg-white/25 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium flex-shrink-0">
+                {slot.type.charAt(0).toUpperCase() + slot.type.slice(1)}
+              </div>
+            )}
+          </div>
+          
+          {/* Subject name - with word wrapping for long names */}
+          <div className="px-2 sm:px-3 mt-1 sm:mt-2 flex-1 min-h-0 overflow-hidden">
+            <div 
+              className="text-xs opacity-90 font-medium leading-tight"
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: showDetails ? 'unset' : 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                wordBreak: 'break-word',
+                hyphens: 'auto'
+              }}
+              title={slot.subject_name} // Show full name on hover
+            >
+              {slot.subject_name}
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Expanded details (visible on click) */}
       {showDetails && (
         <div className="mt-1 sm:mt-2 pt-2 sm:pt-3 border-t border-white/25 text-xs space-y-1 sm:space-y-2 animate-fade-in px-2 sm:px-3 pb-2 sm:pb-3 bg-black/10 rounded-b-lg overflow-hidden">
