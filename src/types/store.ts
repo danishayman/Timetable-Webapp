@@ -63,6 +63,7 @@ export interface TimetableState {
   generateTimetable: () => Promise<TimetableSlot[]>;
   getNonConflictingSlots: () => TimetableSlot[];
   getConflictingSubjectCodes: () => Set<string>;
+  getSubjectConflictStats: () => Map<string, { total: number; conflicting: number; nonConflicting: number }>;
   saveToSession: () => boolean;
   loadFromSession: () => TimetableSlot[];
   resetTimetable: () => void;

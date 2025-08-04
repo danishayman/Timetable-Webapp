@@ -4,7 +4,7 @@ import { TimetableState } from '@/src/types/store';
 import { TimetableSlot, CustomSlot, Clash } from '@/src/types/timetable';
 import { generateId } from '@/src/lib/utils';
 import { DEFAULT_TIMETABLE_NAME } from '@/src/lib/constants';
-import { generateTimetableFromSubjectsWithClashFiltering, addCustomSlotsToTimetable, filterNonConflictingSlots, getConflictingSubjectCodes } from '@/src/services/timetableService';
+import { generateTimetableFromSubjectsWithClashFiltering, addCustomSlotsToTimetable, filterNonConflictingSlots, getConflictingSubjectCodes, getSubjectConflictStats } from '@/src/services/timetableService';
 import { findTimeClashes } from '@/src/services/clashDetection';
 import { SessionManager } from '@/src/lib/sessionManager';
 import { handleError, withRetry, safeStorage, ERROR_CODES } from '@/src/lib/errorHandler';
@@ -453,6 +453,14 @@ const useTimetableStore = create<TimetableState>()(
         getConflictingSubjectCodes: () => {
           const { clashes, unplacedSlots } = get();
           return getConflictingSubjectCodes(clashes, unplacedSlots);
+        },
+
+        /**
+         * Get conflict statistics for all subjects
+         */
+        getSubjectConflictStats: () => {
+          const { timetableSlots, clashes, unplacedSlots } = get();
+          return getSubjectConflictStats(timetableSlots, clashes, unplacedSlots);
         },
 
         /**

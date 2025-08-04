@@ -23,6 +23,7 @@ interface ConflictGroup {
 interface ConflictingSubjectsListProps {
   clashes: Clash[];
   unplacedSlots: TimetableSlot[];
+  allSlots: TimetableSlot[];
   className?: string;
 }
 
@@ -30,17 +31,80 @@ interface ConflictingSubjectsListProps {
  * ConflictingSubjectsList component
  * Displays all subjects that have scheduling conflicts in a clean, organized format
  * Avoids duplicate entries and groups overlapping subjects intelligently
+ * Shows partial conflict information (e.g., "1 of 3 classes excluded")
  */
 export default function ConflictingSubjectsList({ 
   clashes, 
   unplacedSlots, 
+  allSlots,
   className = "" 
 }: ConflictingSubjectsListProps) {
   
+  // Get all conflicting slot IDs
+  const getConflictingSlotIds = (): Set<string> => {
+    const conflictingSlotIds = new Set<string>();
+    
+    // Add slots from direct clashes
+    clashes.forEach(clash => {
+      conflictingSlotIds.add(clash.slot1.id);
+      conflictingSlotIds.add(clash.slot2.id);
+    });
+    
+    // Add all unplaced slots
+    unplacedSlots.forEach(slot => {
+      conflictingSlotIds.add(slot.id);
+    });
+    
+    return conflictingSlotIds;
+  };
+
+  // Get subject statistics (total vs conflicting sessions)
+  const getSubjectStats = () => {
+    const conflictingSlotIds = getConflictingSlotIds();
+    const stats = new Map<string, { 
+      total: number; 
+      conflicting: number; 
+      nonConflicting: number;
+      subjectName: string;
+    }>();
+    
+    // Group all slots by subject to get complete picture
+    allSlots.forEach(slot => {
+      if (!stats.has(slot.subject_code)) {
+        stats.set(slot.subject_code, { 
+          total: 0, 
+          conflicting: 0, 
+          nonConflicting: 0,
+          subjectName: slot.subject_name
+        });
+      }
+      
+      const subjectStats = stats.get(slot.subject_code)!;
+      subjectStats.total++;
+      
+      if (conflictingSlotIds.has(slot.id)) {
+        subjectStats.conflicting++;
+      } else {
+        subjectStats.nonConflicting++;
+      }
+    });
+    
+    // Filter to only subjects that have conflicts
+    const conflictingStats = new Map();
+    stats.forEach((stat, subjectCode) => {
+      if (stat.conflicting > 0) {
+        conflictingStats.set(subjectCode, stat);
+      }
+    });
+    
+    return conflictingStats;
+  };
+
   // Group conflicts to avoid duplicates and handle multi-subject overlaps
   const getConflictGroups = (): ConflictGroup[] => {
     const conflictGroups: ConflictGroup[] = [];
     const processedClashes = new Set<string>();
+    const conflictingSlotIds = getConflictingSlotIds();
     
     // Group clashes by time and location to detect multi-subject overlaps
     const clashGroups = new Map<string, Clash[]>();
@@ -84,6 +148,7 @@ export default function ConflictingSubjectsList({
           }
           
           const subject = subjectsInGroup.get(slot.subject_code)!;
+          // Only add the specific conflicting slot
           if (!subject.slots.some(s => s.id === slot.id)) {
             subject.slots.push(slot);
           }
@@ -164,6 +229,7 @@ export default function ConflictingSubjectsList({
   };
   
   const conflictGroups = getConflictGroups();
+  const subjectStats = getSubjectStats();
   
   if (conflictGroups.length === 0) {
     return null;
@@ -179,17 +245,17 @@ export default function ConflictingSubjectsList({
         </div>
         <div>
           <h3 className="text-lg font-semibold text-red-800 dark:text-red-300">
-            Conflicting Subjects
+            Conflicting Sessions
           </h3>
           <p className="text-sm text-red-600 dark:text-red-400">
-            {conflictGroups.reduce((total, group) => total + group.subjects.length, 0)} subject{conflictGroups.reduce((total, group) => total + group.subjects.length, 0) !== 1 ? 's' : ''} with {conflictGroups.length} conflict{conflictGroups.length !== 1 ? 's' : ''}
+            {Array.from(subjectStats.values()).reduce((total, stat) => total + stat.conflicting, 0)} session{Array.from(subjectStats.values()).reduce((total, stat) => total + stat.conflicting, 0) !== 1 ? 's' : ''} from {subjectStats.size} subject{subjectStats.size !== 1 ? 's' : ''} excluded
           </p>
         </div>
       </div>
       
       <p className="text-red-700 dark:text-red-300 mb-6 text-sm leading-relaxed">
-        The following subjects have conflicting schedules and have been excluded from your timetable. 
-        Please resolve these conflicts by selecting different tutorial groups or removing one of the conflicting subjects.
+        The following sessions have conflicting schedules and have been excluded from your timetable. 
+        Other sessions from these subjects that don't conflict are still included in your schedule.
       </p>
       
       <div className="space-y-4">
@@ -231,54 +297,71 @@ export default function ConflictingSubjectsList({
 
             {/* Subject Details */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {group.subjects.map((subject, index) => (
-                <div key={subject.subject_code} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700/50">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <h5 className="font-semibold text-gray-900 dark:text-white">
-                      {subject.subject_code}
-                    </h5>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">
-                    {subject.subject_name}
-                  </p>
-                  
-                  {/* Affected Classes */}
-                  <div>
-                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                      Affected Classes ({subject.slots.length}):
+              {group.subjects.map((subject, index) => {
+                const stats = subjectStats.get(subject.subject_code);
+                return (
+                  <div key={subject.subject_code} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700/50">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <h5 className="font-semibold text-gray-900 dark:text-white">
+                        {subject.subject_code}
+                      </h5>
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">
+                      {subject.subject_name}
                     </p>
-                    <div className="space-y-1">
-                      {subject.slots.map((slot) => (
-                        <div key={slot.id} className="text-xs bg-white dark:bg-gray-600 px-2 py-1 rounded">
-                          <span className="font-medium text-gray-800 dark:text-gray-200">
-                            {slot.type.charAt(0).toUpperCase() + slot.type.slice(1)}
-                          </span>
-                          <span className="text-gray-600 dark:text-gray-400 ml-1">
-                            • {formatDayOfWeek(slot.day_of_week)} • {formatTimeRange(slot.start_time, slot.end_time)} • {slot.venue}
-                          </span>
+                    
+                    {/* Conflict Statistics */}
+                    {stats && (
+                      <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                        <p className="text-xs font-medium text-red-700 dark:text-red-400">
+                          {stats.conflicting} of {stats.total} session{stats.total !== 1 ? 's' : ''} excluded due to conflicts
+                        </p>
+                        {stats.nonConflicting > 0 && (
+                          <p className="text-xs text-green-700 dark:text-green-400 mt-1">
+                            {stats.nonConflicting} session{stats.nonConflicting !== 1 ? 's' : ''} still included in timetable
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Conflicting Sessions Only */}
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Conflicting Sessions ({subject.slots.length}):
+                      </p>
+                      <div className="space-y-1">
+                        {subject.slots.map((slot) => (
+                          <div key={slot.id} className="text-xs bg-white dark:bg-gray-600 px-2 py-1 rounded">
+                            <span className="font-medium text-gray-800 dark:text-gray-200">
+                              {slot.type.charAt(0).toUpperCase() + slot.type.slice(1)}
+                            </span>
+                            <span className="text-gray-600 dark:text-gray-400 ml-1">
+                              • {formatDayOfWeek(slot.day_of_week)} • {formatTimeRange(slot.start_time, slot.end_time)} • {slot.venue}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Action Button */}
+                    <div className="mt-3">
+                      <button
+                        disabled
+                        className="w-full px-3 py-2 bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed transition-colors text-sm"
+                        title="Feature coming soon"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit Timetable (Coming Soon)
                         </div>
-                      ))}
+                      </button>
                     </div>
                   </div>
-                  
-                  {/* Action Button */}
-                  <div className="mt-3">
-                    <button
-                      disabled
-                      className="w-full px-3 py-2 bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed transition-colors text-sm"
-                      title="Feature coming soon"
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit Timetable (Coming Soon)
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
@@ -297,6 +380,7 @@ export default function ConflictingSubjectsList({
               <li>• Choose different tutorial groups for conflicting subjects</li>
               <li>• Remove one of the conflicting subjects from your selection</li>
               <li>• Check if alternative class times are available</li>
+              <li>• Note: Non-conflicting sessions from these subjects remain in your timetable</li>
             </ul>
           </div>
         </div>

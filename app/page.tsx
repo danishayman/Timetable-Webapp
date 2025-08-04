@@ -201,6 +201,7 @@ export default function Home() {
             <ConflictingSubjectsList 
               clashes={clashes}
               unplacedSlots={unplacedSlots}
+              allSlots={timetableSlots}
             />
           </div>
         )}
