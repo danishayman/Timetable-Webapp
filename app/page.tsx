@@ -7,6 +7,7 @@ import TimetableGrid from "@/src/components/timetable/TimetableGrid";
 import TimetablePositioner from "@/src/components/timetable/TimetablePositioner";
 import ClassBlock from "@/src/components/timetable/ClassBlock";
 import UnplacedSubjects from "@/src/components/timetable/UnplacedSubjects";
+import ConflictingSubjectsList from "@/src/components/timetable/ConflictingSubjects";
 import SubjectSelectionModal from "@/src/components/common/SubjectSelectionModal";
 import useTimetableStore from "@/src/store/timetableStore";
 import useSubjectStore from "@/src/store/subjectStore";
@@ -15,7 +16,7 @@ export default function Home() {
   const [showWeekends, setShowWeekends] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [mobileViewMode, setMobileViewMode] = useState<'day' | 'week'>('week');
-  const { timetableSlots, unplacedSlots, initializeStore, generateTimetable, isGenerating, placeSubject, removeUnplacedSubject, removeTimetableSlot } = useTimetableStore();
+  const { timetableSlots, unplacedSlots, clashes, initializeStore, generateTimetable, isGenerating, placeSubject, removeUnplacedSubject, removeTimetableSlot, getNonConflictingSlots } = useTimetableStore();
   const { selectedSubjects, initializeStore: initializeSubjectStore } = useSubjectStore();
 
   // Initialize both stores when component mounts
@@ -125,7 +126,7 @@ export default function Home() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
-                  <span>{unplacedSlots.length} unplaced subject{unplacedSlots.length !== 1 ? 's' : ''}</span>
+                  <span>{timetableSlots.length - getNonConflictingSlots().length} classes excluded due to conflicts</span>
                 </div>
               )}
             </div>
@@ -194,6 +195,16 @@ export default function Home() {
           </div>
         )}
 
+        {/* Conflicting Subjects */}
+        {(clashes.length > 0 || unplacedSlots.length > 0) && !isGenerating && (
+          <div className="mb-6">
+            <ConflictingSubjectsList 
+              clashes={clashes}
+              unplacedSlots={unplacedSlots}
+            />
+          </div>
+        )}
+
         {/* Unplaced Subjects */}
         {unplacedSlots.length > 0 && !isGenerating && (
           <div className="mb-6">
@@ -217,7 +228,7 @@ export default function Home() {
                 mobileViewMode={mobileViewMode}
                 onMobileViewModeChange={handleMobileViewModeChange}
               >
-                {timetableSlots.map((slot) => (
+                {getNonConflictingSlots().map((slot) => (
                   <TimetablePositioner
                     key={slot.id}
                     dayOfWeek={slot.day_of_week}
@@ -235,7 +246,7 @@ export default function Home() {
           )}
         </div>
 
-        {!isGenerating && timetableSlots.length === 0 && (
+        {!isGenerating && getNonConflictingSlots().length === 0 && (
           <div className="text-center mt-8 sm:mt-12 px-4">
             <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl mb-4 sm:mb-6">
               <svg className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,13 +256,17 @@ export default function Home() {
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3">
               {selectedSubjects.length === 0 
                 ? "Ready to build your schedule?" 
-                : "No classes scheduled"
+                : (clashes.length > 0 || unplacedSlots.length > 0) 
+                  ? "All subjects have conflicts"
+                  : "No classes scheduled"
               }
             </h3>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
               {selectedSubjects.length === 0 
                 ? "Start by selecting your subjects to create a personalized timetable."
-                : "No class schedules are available for your selected subjects at the moment."
+                : (clashes.length > 0 || unplacedSlots.length > 0)
+                  ? "Please resolve the conflicts above to display your timetable."
+                  : "No class schedules are available for your selected subjects at the moment."
               }
             </p>
             <button

@@ -36,48 +36,37 @@ export interface SubjectState {
  * Manages timetable generation and display
  */
 export interface TimetableState {
+  // State
   sessionId: string;
   timetableSlots: TimetableSlot[];
   unplacedSlots: TimetableSlot[];
-  customSlots: CustomSlot[];
+  customSlots: TimetableSlot[];
   clashes: Clash[];
   isGenerating: boolean;
   error: string | null;
   timetableName: string;
-  
-  // Methods
+
+  // Actions
   initializeStore: () => void;
   setTimetableSlots: (slots: TimetableSlot[]) => void;
   setUnplacedSlots: (slots: TimetableSlot[]) => void;
-  addTimetableSlot: (slot: TimetableSlot) => void;
-  removeTimetableSlot: (slotId: string) => void;
-  clearTimetableSlots: () => void;
-  
-  addCustomSlot: (slot: Omit<CustomSlot, 'id'>) => void;
-  updateCustomSlot: (id: string, updates: Partial<CustomSlot>) => void;
+  addCustomSlot: (slot: TimetableSlot) => void;
+  updateCustomSlot: (slotId: string, updatedSlot: Partial<TimetableSlot>) => void;
   removeCustomSlot: (slotId: string) => void;
-  clearCustomSlots: () => void;
-  
   setClashes: (clashes: Clash[]) => void;
-  addClash: (clash: Omit<Clash, 'id'>) => void;
-  removeClash: (clashId: string) => void;
-  clearClashes: () => void;
-  
+  placeSubject: (slotId: string, action: 'place' | 'replace', conflictingSlotId?: string) => void;
+  removeUnplacedSubject: (slotId: string) => void;
+  removeTimetableSlot: (slotId: string) => void;
   setTimetableName: (name: string) => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setError: (error: string | null) => void;
-  
-  // New methods for unplaced subject management
-  placeSubject: (slotId: string, action: 'place' | 'replace', conflictingSlotId?: string) => void;
-  removeUnplacedSubject: (slotId: string) => void;
-  
   generateTimetable: () => Promise<TimetableSlot[]>;
+  getNonConflictingSlots: () => TimetableSlot[];
+  getConflictingSubjectCodes: () => Set<string>;
+  saveToSession: () => boolean;
+  loadFromSession: () => TimetableSlot[];
   resetTimetable: () => void;
   generateNewSession: () => void;
-  
-  // Session persistence methods
-  saveToSession: () => void;
-  loadFromSession: () => TimetableSlot[];
 }
 
 /**

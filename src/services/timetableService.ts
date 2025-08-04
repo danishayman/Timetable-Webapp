@@ -191,3 +191,74 @@ export async function generateCompleteTimetable(
   // Add custom slots
   return addCustomSlotsToTimetable(subjectSlots, customSlots);
 } 
+
+/**
+ * Get all subject codes that have any conflicts
+ * @param clashes Array of clash objects
+ * @param unplacedSlots Array of unplaced slots
+ * @returns Set of subject codes that have conflicts
+ */
+export function getConflictingSubjectCodes(clashes: Clash[], unplacedSlots: TimetableSlot[]): Set<string> {
+  const conflictingSubjects = new Set<string>();
+  
+  // Add subjects from direct clashes - ensure BOTH subjects in each clash are marked as conflicting
+  clashes.forEach(clash => {
+    conflictingSubjects.add(clash.slot1.subject_code);
+    conflictingSubjects.add(clash.slot2.subject_code);
+  });
+  
+  // Add subjects from unplaced slots
+  unplacedSlots.forEach(slot => {
+    conflictingSubjects.add(slot.subject_code);
+  });
+  
+  return conflictingSubjects;
+}
+
+/**
+ * Filter out all slots from subjects that have any conflicts
+ * @param allSlots Array of all timetable slots
+ * @param clashes Array of clash objects
+ * @param unplacedSlots Array of unplaced slots
+ * @returns Array of slots with no conflicts from any part of their subject
+ */
+export function filterNonConflictingSlots(
+  allSlots: TimetableSlot[], 
+  clashes: Clash[], 
+  unplacedSlots: TimetableSlot[]
+): TimetableSlot[] {
+  // Get all slot IDs that are involved in clashes
+  const clashingSlotIds = new Set<string>();
+  
+  // Add slots from direct clashes
+  clashes.forEach(clash => {
+    clashingSlotIds.add(clash.slot1.id);
+    clashingSlotIds.add(clash.slot2.id);
+  });
+
+  // Add all unplaced slots to the clashing set
+  unplacedSlots.forEach(slot => {
+    clashingSlotIds.add(slot.id);
+  });
+
+  // Get all subject codes that have conflicts
+  const conflictingSubjects = getConflictingSubjectCodes(clashes, unplacedSlots);
+
+  // Enhanced filtering: Remove ALL slots from ANY subject that has ANY conflict
+  // This ensures that if any slot of a subject conflicts, ALL slots of that subject are removed
+  return allSlots.filter(slot => {
+    // Exclude if slot ID is directly involved in a clash
+    if (clashingSlotIds.has(slot.id)) return false;
+    
+    // Exclude if the subject code has ANY conflicts anywhere
+    if (conflictingSubjects.has(slot.subject_code)) return false;
+    
+    // Additional check: ensure no other slot from this subject is in unplaced or clashing
+    const hasConflictingSlotFromSameSubject = allSlots.some(otherSlot => 
+      otherSlot.subject_code === slot.subject_code && 
+      (clashingSlotIds.has(otherSlot.id) || conflictingSubjects.has(otherSlot.subject_code))
+    );
+    
+    return !hasConflictingSlotFromSameSubject;
+  });
+} 
