@@ -6,9 +6,6 @@
 import { z } from 'zod';
 import { 
   subjectSchema, 
-  classScheduleSchema, 
-  tutorialGroupSchema,
-  searchQuerySchema,
   subjectFiltersSchema,
   validationPatterns,
   sanitizeInput,
@@ -18,7 +15,7 @@ import {
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
-  sanitizedData?: any;
+  sanitizedData?: unknown;
 }
 
 export interface ValidationOptions {
@@ -34,20 +31,20 @@ export class FormValidator {
   /**
    * Validate subject form data
    */
-  static validateSubjectForm(data: any, options: ValidationOptions = {}): ValidationResult {
+  static validateSubjectForm(data: Record<string, unknown>, options: ValidationOptions = {}): ValidationResult {
     const errors: string[] = [];
-    let sanitizedData = { ...data };
+    const sanitizedData = { ...data };
 
     try {
       // Sanitize input if requested
       if (options.sanitize) {
-        if (sanitizedData.code) {
+        if (typeof sanitizedData.code === 'string') {
           sanitizedData.code = sanitizeInput.string(sanitizedData.code).toUpperCase();
         }
-        if (sanitizedData.name) {
+        if (typeof sanitizedData.name === 'string') {
           sanitizedData.name = sanitizeInput.string(sanitizedData.name);
         }
-        if (sanitizedData.description) {
+        if (typeof sanitizedData.description === 'string') {
           sanitizedData.description = sanitizeInput.string(sanitizedData.description);
         }
       }
@@ -55,17 +52,17 @@ export class FormValidator {
       // Check for edge cases
       if (options.checkEdgeCases) {
         // Check for empty/whitespace fields
-        if (sanitizedData.code && edgeCaseValidation.isEmptyOrWhitespace(sanitizedData.code)) {
+        if (typeof sanitizedData.code === 'string' && edgeCaseValidation.isEmptyOrWhitespace(sanitizedData.code)) {
           errors.push('Subject code cannot be empty or whitespace only');
         }
         
         // Check for problematic Unicode
-        if (sanitizedData.name && edgeCaseValidation.hasProblematicUnicode(sanitizedData.name)) {
+        if (typeof sanitizedData.name === 'string' && edgeCaseValidation.hasProblematicUnicode(sanitizedData.name)) {
           errors.push('Subject name contains invalid characters');
         }
         
         // Check for excessive number values
-        if (sanitizedData.credits && edgeCaseValidation.isExcessiveNumber(sanitizedData.credits)) {
+        if (typeof sanitizedData.credits === 'number' && edgeCaseValidation.isExcessiveNumber(sanitizedData.credits)) {
           errors.push('Credits value is too large');
         }
       }
@@ -83,7 +80,7 @@ export class FormValidator {
         errors,
         sanitizedData: errors.length === 0 ? sanitizedData : undefined
       };
-    } catch (error) {
+    } catch {
       errors.push('Validation failed due to unexpected error');
       return { isValid: false, errors };
     }
@@ -92,17 +89,17 @@ export class FormValidator {
   /**
    * Validate schedule form data
    */
-  static validateScheduleForm(data: any, options: ValidationOptions = {}): ValidationResult {
+  static validateScheduleForm(data: Record<string, unknown>, options: ValidationOptions = {}): ValidationResult {
     const errors: string[] = [];
-    let sanitizedData = { ...data };
+    const sanitizedData = { ...data };
 
     try {
       // Sanitize input
       if (options.sanitize) {
-        if (sanitizedData.venue) {
+        if (typeof sanitizedData.venue === 'string') {
           sanitizedData.venue = sanitizeInput.string(sanitizedData.venue);
         }
-        if (sanitizedData.instructor) {
+        if (typeof sanitizedData.instructor === 'string') {
           sanitizedData.instructor = sanitizeInput.string(sanitizedData.instructor);
         }
       }
@@ -110,7 +107,7 @@ export class FormValidator {
       // Check edge cases
       if (options.checkEdgeCases) {
         // Validate time sequence
-        if (sanitizedData.start_time && sanitizedData.end_time) {
+        if (typeof sanitizedData.start_time === 'string' && typeof sanitizedData.end_time === 'string') {
           const startValid = validationPatterns.time24Hour.test(sanitizedData.start_time);
           const endValid = validationPatterns.time24Hour.test(sanitizedData.end_time);
           
@@ -160,7 +157,7 @@ export class FormValidator {
         errors,
         sanitizedData: errors.length === 0 ? sanitizedData : undefined
       };
-    } catch (error) {
+    } catch {
       errors.push('Schedule validation failed due to unexpected error');
       return { isValid: false, errors };
     }
@@ -169,20 +166,20 @@ export class FormValidator {
   /**
    * Validate search and filter inputs
    */
-  static validateSearchFilters(data: any, options: ValidationOptions = {}): ValidationResult {
+  static validateSearchFilters(data: Record<string, unknown>, options: ValidationOptions = {}): ValidationResult {
     const errors: string[] = [];
-    let sanitizedData = { ...data };
+    const sanitizedData = { ...data };
 
     try {
       // Sanitize search queries
       if (options.sanitize) {
-        if (sanitizedData.search) {
+        if (typeof sanitizedData.search === 'string') {
           sanitizedData.search = sanitizeInput.searchQuery(sanitizedData.search);
         }
-        if (sanitizedData.department) {
+        if (typeof sanitizedData.department === 'string') {
           sanitizedData.department = sanitizeInput.string(sanitizedData.department);
         }
-        if (sanitizedData.semester) {
+        if (typeof sanitizedData.semester === 'string') {
           sanitizedData.semester = sanitizeInput.string(sanitizedData.semester);
         }
       }
@@ -190,7 +187,7 @@ export class FormValidator {
       // Check for edge cases
       if (options.checkEdgeCases) {
         // Prevent overly broad searches
-        if (sanitizedData.search && sanitizedData.search.length === 1) {
+        if (typeof sanitizedData.search === 'string' && sanitizedData.search.length === 1) {
           errors.push('Search term must be at least 2 characters');
         }
         
@@ -223,7 +220,7 @@ export class FormValidator {
         errors,
         sanitizedData: errors.length === 0 ? sanitizedData : undefined
       };
-    } catch (error) {
+    } catch {
       errors.push('Search filter validation failed');
       return { isValid: false, errors };
     }
@@ -239,7 +236,7 @@ export class ApiValidator {
    * Validate and sanitize API request body
    */
   static validateRequestBody(
-    body: any, 
+    body: unknown, 
     schema: z.ZodSchema, 
     options: ValidationOptions = {}
   ): ValidationResult {
@@ -283,7 +280,7 @@ export class ApiValidator {
         errors,
         sanitizedData: result.success ? result.data : undefined
       };
-    } catch (error) {
+    } catch {
       return { 
         isValid: false, 
         errors: ['Failed to validate request body'] 
@@ -331,7 +328,7 @@ export class ApiValidator {
         errors,
         sanitizedData: errors.length === 0 ? sanitizedData : undefined
       };
-    } catch (error) {
+    } catch {
       return { 
         isValid: false, 
         errors: ['Failed to validate query parameters'] 
@@ -348,10 +345,10 @@ export class EmptyStateValidator {
   /**
    * Check if data represents an empty state and provide appropriate handling
    */
-  static checkEmptyState(data: any, dataType: 'subjects' | 'schedules' | 'tutorials'): {
+  static checkEmptyState(data: unknown, dataType: 'subjects' | 'schedules' | 'tutorials'): {
     isEmpty: boolean;
     message: string;
-    fallbackData?: any;
+    fallbackData?: unknown;
   } {
     if (!data || (Array.isArray(data) && data.length === 0)) {
       switch (dataType) {
@@ -389,18 +386,22 @@ export class EmptyStateValidator {
    * Validate that required data dependencies exist
    */
   static validateDataDependencies(data: {
-    selectedSubjects?: any[];
-    availableSubjects?: any[];
-    tutorials?: any[];
+    selectedSubjects?: unknown[];
+    availableSubjects?: unknown[];
+    tutorials?: unknown[];
   }): ValidationResult {
     const errors: string[] = [];
 
     // Check if selected subjects exist in available subjects
-    if (data.selectedSubjects && data.availableSubjects) {
-      data.selectedSubjects.forEach(selected => {
-        const exists = data.availableSubjects?.some(subject => subject.id === selected.subject_id);
+    if (Array.isArray(data.selectedSubjects) && Array.isArray(data.availableSubjects)) {
+      data.selectedSubjects.forEach((selected: unknown) => {
+        const selectedSubject = selected as { subject_id?: string; subject_code?: string };
+        const exists = data.availableSubjects?.some((subject: unknown) => {
+          const subjectData = subject as { id?: string };
+          return subjectData.id === selectedSubject.subject_id;
+        });
         if (!exists) {
-          errors.push(`Selected subject ${selected.subject_code} is no longer available`);
+          errors.push(`Selected subject ${selectedSubject.subject_code || 'unknown'} is no longer available`);
         }
       });
     }
@@ -425,7 +426,7 @@ export class DataBoundaryValidator {
   /**
    * Validate data doesn't exceed reasonable boundaries
    */
-  static validateDataBoundaries(data: any, dataType: string): ValidationResult {
+  static validateDataBoundaries(data: unknown, dataType: string): ValidationResult {
     const errors: string[] = [];
 
     try {
@@ -461,7 +462,7 @@ export class DataBoundaryValidator {
         errors,
         sanitizedData: data
       };
-    } catch (error) {
+    } catch {
       return {
         isValid: false,
         errors: ['Failed to validate data boundaries']
@@ -479,8 +480,8 @@ export class DataBoundaryValidator {
     const maxLimit = 100;
     const defaultLimit = 20;
 
-    let validatedPage = page || 1;
-    let validatedLimit = limit || defaultLimit;
+    const validatedPage = page || 1;
+    const validatedLimit = limit || defaultLimit;
 
     if (validatedPage < 1) {
       errors.push('Page must be at least 1');

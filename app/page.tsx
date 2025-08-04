@@ -16,14 +16,14 @@ export default function Home() {
   const [showWeekends, setShowWeekends] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [mobileViewMode, setMobileViewMode] = useState<'day' | 'week'>('week');
-  const { timetableSlots, unplacedSlots, clashes, initializeStore, generateTimetable, isGenerating, placeSubject, removeUnplacedSubject, removeTimetableSlot, getNonConflictingSlots } = useTimetableStore();
+  const { timetableSlots, unplacedSlots, clashes, initializeStore, generateTimetable, isGenerating, getNonConflictingSlots } = useTimetableStore();
   const { selectedSubjects, initializeStore: initializeSubjectStore } = useSubjectStore();
 
   // Initialize both stores when component mounts
   useEffect(() => {
     initializeStore();
     initializeSubjectStore();
-  }, []); // Empty dependency array since Zustand functions are stable
+  }, [initializeStore, initializeSubjectStore]);
 
   // Automatically regenerate timetable when selected subjects change
   useEffect(() => {

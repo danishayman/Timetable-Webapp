@@ -4,13 +4,12 @@ import { useState, useEffect } from 'react';
 import TimetableGrid from '@/src/components/timetable/TimetableGrid';
 import TimetablePositioner from '@/src/components/timetable/TimetablePositioner';
 import ClassBlock from '@/src/components/timetable/ClassBlock';
-import ClashWarning from '@/src/components/timetable/ClashWarning';
 import ConflictingSubjectsList from '@/src/components/timetable/ConflictingSubjects';
 import Loading from '@/src/components/common/Loading';
 import ErrorMessage from '@/src/components/common/ErrorMessage';
 import useSubjectStore from '@/src/store/subjectStore';
 import useTimetableStore from '@/src/store/timetableStore';
-import { Clash, TimetableSlot } from '@/src/types/timetable';
+import { TimetableSlot } from '@/src/types/timetable';
 
 export default function TimetablePage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +22,6 @@ export default function TimetablePage() {
     unplacedSlots,
     clashes, 
     generateTimetable,
-    resetTimetable,
     getNonConflictingSlots
   } = useTimetableStore();
 
@@ -56,12 +54,7 @@ export default function TimetablePage() {
     }
   };
 
-  // Check if a slot has clashes
-  const hasClash = (slotId: string): boolean => {
-    return clashes.some(clash => 
-      clash.slot1.id === slotId || clash.slot2.id === slotId
-    );
-  };
+
 
   // Get non-conflicting slots for display
   const nonClashingSlots = getNonConflictingSlots();

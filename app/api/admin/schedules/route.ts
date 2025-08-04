@@ -374,7 +374,7 @@ export async function PUT(request: Request) {
     
     // Remove undefined values
     const cleanUpdateData = Object.fromEntries(
-      Object.entries(updateData).filter(([_, value]) => value !== undefined)
+      Object.entries(updateData).filter((entry) => entry[1] !== undefined)
     );
 
     // Update the schedule

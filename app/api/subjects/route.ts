@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/src/lib/supabase';
 import { ApiResponse, Subject } from '@/src/types';
-import { handleError, validateApiResponse, withRetry, ERROR_CODES } from '@/src/lib/errorHandler';
+import { handleError } from '@/src/lib/errorHandler';
 import { ApiValidator, DataBoundaryValidator } from '@/src/lib/inputValidation';
-import { subjectFiltersSchema } from '@/src/lib/validations';
+// Removed unused import: subjectFiltersSchema
 
 /**
  * GET /api/subjects
@@ -90,7 +90,7 @@ export async function GET(request: Request) {
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Query timeout')), 10000)
       )
-    ]) as { data: Subject[] | null; error: any };
+    ]) as { data: Subject[] | null; error: unknown };
 
     if (error) {
       console.error('Error fetching subjects:', error);

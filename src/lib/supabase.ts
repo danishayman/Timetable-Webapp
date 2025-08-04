@@ -20,7 +20,7 @@ export const getAdminClient = () => {
 // Function to test the connection
 export const testConnection = async () => {
   try {
-    const { data, error } = await supabase.from('subjects').select('count');
+    const { error } = await supabase.from('subjects').select('count');
     if (error) {
       console.error('Supabase connection error:', error);
       return false;

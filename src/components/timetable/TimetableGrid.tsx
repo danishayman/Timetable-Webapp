@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { DAYS_OF_WEEK, SHORT_DAYS, TIME_SLOTS } from '@/src/lib/constants';
-import { formatTime, formatTimeShort } from '@/src/lib/utils';
+import { formatTimeShort } from '@/src/lib/utils';
 import { TimetableGridSkeleton } from '../common/SkeletonLoaders';
 import { LoadingOverlay } from '../common/Loading';
 import { useIsMobile } from '@/src/hooks/useResponsive';
@@ -155,14 +155,14 @@ export default function TimetableGrid({
           </div>
           
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {TIME_SLOTS.map((time, timeIndex) => {
+            {TIME_SLOTS.map((time) => {
               // Filter children to get classes for current day and time slot
               const currentDayOfWeek = showWeekends ? currentDayIndex : currentDayIndex + 1;
               const currentTimeSlot = time;
               
               const dayClasses = React.Children.toArray(children).filter((child) => {
                 if (!React.isValidElement(child)) return false;
-                const childProps = child.props as any; // Cast to any to access props
+                const childProps = child.props as { dayOfWeek: number; startTime: string; endTime: string };
                 // Check if this class is for the current day and overlaps with current time slot
                 return childProps.dayOfWeek === currentDayOfWeek && 
                        childProps.startTime <= currentTimeSlot && 
@@ -308,7 +308,7 @@ export default function TimetableGrid({
                   {React.Children.map(children, (child) => {
                     if (React.isValidElement(child)) {
                       // Clone child and add compactMode prop for mobile week view
-                      return React.cloneElement(child as React.ReactElement<any>, {
+                      return React.cloneElement(child as React.ReactElement<{ compactMode?: boolean }>, {
                         compactMode: true
                       });
                     }

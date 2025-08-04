@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { X, Search, Plus, Check, Clock, MapPin, User } from 'lucide-react';
+import { X, Search, Plus, Check } from 'lucide-react';
 import useSubjectStore from '@/src/store/subjectStore';
 import { Subject } from '@/src/types/subject';
 import Loading from './Loading';
@@ -38,7 +38,8 @@ export default function SubjectSelectionModal({
       initializeStore();
       fetchSubjects({});
     }
-  }, [isOpen]); // Remove functions from dependency array as Zustand functions are stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]); // Zustand store functions are stable, safe to omit from deps
 
   // Filter subjects based on search and filters
   const filteredSubjects = availableSubjects.filter(subject => {

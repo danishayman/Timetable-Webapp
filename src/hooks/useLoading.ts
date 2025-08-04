@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 /**
  * Hook for managing async operations with loading states
  */
-export function useAsyncOperation<T = any>() {
+export function useAsyncOperation<T = unknown>() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<T | null>(null);

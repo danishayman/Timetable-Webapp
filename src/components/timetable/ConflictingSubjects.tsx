@@ -104,7 +104,6 @@ export default function ConflictingSubjectsList({
   const getConflictGroups = (): ConflictGroup[] => {
     const conflictGroups: ConflictGroup[] = [];
     const processedClashes = new Set<string>();
-    const conflictingSlotIds = getConflictingSlotIds();
     
     // Group clashes by time and location to detect multi-subject overlaps
     const clashGroups = new Map<string, Clash[]>();
@@ -255,7 +254,7 @@ export default function ConflictingSubjectsList({
       
       <p className="text-red-700 dark:text-red-300 mb-6 text-sm leading-relaxed">
         The following sessions have conflicting schedules and have been excluded from your timetable. 
-        Other sessions from these subjects that don't conflict are still included in your schedule.
+        Other sessions from these subjects that don&apos;t conflict are still included in your schedule.
       </p>
       
       <div className="space-y-4">
@@ -297,7 +296,7 @@ export default function ConflictingSubjectsList({
 
             {/* Subject Details */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {group.subjects.map((subject, index) => {
+              {group.subjects.map((subject) => {
                 const stats = subjectStats.get(subject.subject_code);
                 return (
                   <div key={subject.subject_code} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700/50">
@@ -310,7 +309,6 @@ export default function ConflictingSubjectsList({
                     <p className="text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">
                       {subject.subject_name}
                     </p>
-                    
                     {/* Conflict Statistics */}
                     {stats && (
                       <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/30 rounded-lg">
@@ -324,7 +322,6 @@ export default function ConflictingSubjectsList({
                         )}
                       </div>
                     )}
-                    
                     {/* Conflicting Sessions Only */}
                     <div>
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
@@ -343,7 +340,6 @@ export default function ConflictingSubjectsList({
                         ))}
                       </div>
                     </div>
-                    
                     {/* Action Button */}
                     <div className="mt-3">
                       <button

@@ -8,14 +8,14 @@ export interface AppError {
   code: string;
   status?: number;
   timestamp: Date;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface ErrorHandlerOptions {
   showToUser?: boolean;
   logToConsole?: boolean;
   retryable?: boolean;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 /**
@@ -80,7 +80,7 @@ export function createAppError(
   message: string,
   code: string = ERROR_CODES.UNKNOWN_ERROR,
   status?: number,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): AppError {
   return {
     message,
@@ -171,7 +171,6 @@ export function handleError(
   options: ErrorHandlerOptions = {}
 ): AppError {
   const {
-    showToUser = true,
     logToConsole = true,
     retryable = false,
     context = {},
@@ -266,7 +265,7 @@ export function validateApiResponse<T>(response: { data: T | null; error: string
 /**
  * Wraps async operations with error handling
  */
-export function withErrorHandling<T extends any[], R>(
+export function withErrorHandling<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   options: ErrorHandlerOptions = {}
 ) {
@@ -285,8 +284,8 @@ export function withErrorHandling<T extends any[], R>(
 export function safeJsonParse<T>(json: string, fallback: T): T {
   try {
     return JSON.parse(json);
-  } catch (error) {
-    console.warn('Failed to parse JSON:', error);
+  } catch {
+    console.warn('Failed to parse JSON');
     return fallback;
   }
 }
@@ -295,22 +294,22 @@ export function safeJsonParse<T>(json: string, fallback: T): T {
  * Safe localStorage operations with error handling
  */
 export const safeStorage = {
-  getItem: (key: string, fallback: any = null) => {
+  getItem: (key: string, fallback: unknown = null) => {
     try {
       const item = localStorage.getItem(key);
       return item ? safeJsonParse(item, fallback) : fallback;
-    } catch (error) {
-      console.warn(`Failed to get item from localStorage: ${key}`, error);
+    } catch {
+      console.warn(`Failed to get item from localStorage: ${key}`);
       return fallback;
     }
   },
   
-  setItem: (key: string, value: any): boolean => {
+  setItem: (key: string, value: unknown): boolean => {
     try {
       localStorage.setItem(key, JSON.stringify(value));
       return true;
-    } catch (error) {
-      console.error(`Failed to set item in localStorage: ${key}`, error);
+    } catch {
+      console.error(`Failed to set item in localStorage: ${key}`);
       return false;
     }
   },
@@ -319,8 +318,8 @@ export const safeStorage = {
     try {
       localStorage.removeItem(key);
       return true;
-    } catch (error) {
-      console.error(`Failed to remove item from localStorage: ${key}`, error);
+    } catch {
+      console.error(`Failed to remove item from localStorage: ${key}`);
       return false;
     }
   },

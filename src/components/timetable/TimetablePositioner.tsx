@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { calculateRowIndex, calculateRowSpan, getClosestTimeSlot } from '@/src/lib/utils';
-import { TIME_SLOTS } from '@/src/lib/constants';
 
 interface TimetablePositionerProps {
   children: React.ReactNode;
@@ -97,8 +96,8 @@ export default function TimetablePositioner({
       {React.isValidElement(children) 
         ? React.cloneElement(children, { 
             compactMode,
-            isClashing: isClashing || (React.Children.toArray(children).length > 0 && (children as any).props?.isClashing)
-          } as any)
+            isClashing: isClashing || (React.Children.toArray(children).length > 0 && (children as React.ReactElement<{ isClashing?: boolean }>).props?.isClashing)
+          } as { compactMode?: boolean; isClashing?: boolean })
         : children
       }
     </div>

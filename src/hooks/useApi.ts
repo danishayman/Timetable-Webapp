@@ -23,7 +23,7 @@ export interface ApiState<T> {
 /**
  * Hook for making API calls with automatic error handling and retry logic
  */
-export function useApi<T = any>(options: UseApiOptions = {}) {
+export function useApi<T = unknown>(options: UseApiOptions = {}) {
   const {
     retries = 3,
     showErrorNotification = true,
@@ -115,7 +115,7 @@ export function useApi<T = any>(options: UseApiOptions = {}) {
 /**
  * Hook for making fetch requests with automatic response validation
  */
-export function useFetch<T = any>(options: UseApiOptions = {}) {
+export function useFetch<T = unknown>(options: UseApiOptions = {}) {
   const api = useApi<T>(options);
 
   const fetchData = useCallback(async (url: string, fetchOptions?: RequestInit): Promise<T | null> => {
@@ -146,12 +146,12 @@ export function useFetch<T = any>(options: UseApiOptions = {}) {
 /**
  * Hook for managing form submissions with error handling
  */
-export function useFormSubmission<T = any>(options: UseApiOptions = {}) {
+export function useFormSubmission<T = unknown>(options: UseApiOptions = {}) {
   const api = useApi<T>(options);
 
   const submit = useCallback(async (
     url: string,
-    data: any,
+    data: Record<string, unknown>,
     method: 'POST' | 'PUT' | 'PATCH' = 'POST'
   ): Promise<T | null> => {
     return api.execute(async () => {
@@ -187,7 +187,7 @@ export function useOptimisticUpdate<T>(
 ) {
   const [data, setData] = useState<T>(initialData);
   const [previousData, setPreviousData] = useState<T>(initialData);
-  const api = useApi(options);
+  const api = useApi<T>(options);
 
   const updateOptimistically = useCallback(async (
     optimisticUpdate: (current: T) => T,
@@ -235,7 +235,7 @@ export interface UsePaginationOptions extends UseApiOptions {
   initialPage?: number;
 }
 
-export function usePagination<T = any>(options: UsePaginationOptions = {}) {
+export function usePagination<T = unknown>(options: UsePaginationOptions = {}) {
   const { pageSize = 10, initialPage = 1, ...apiOptions } = options;
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(0);

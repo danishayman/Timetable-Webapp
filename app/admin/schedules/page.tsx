@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, Plus, Edit, Trash2, Search, Filter, AlertCircle, CheckCircle, Loader2, ArrowLeft, Clock, MapPin, Users, BookOpen } from 'lucide-react';
+import { Calendar, Plus, Edit, Trash2, Search, Filter, AlertCircle, CheckCircle, Loader2, ArrowLeft, Clock, MapPin, Users } from 'lucide-react';
 import ScheduleForm from '@/src/components/admin/ScheduleForm';
 import { ClassSchedule } from '@/src/types/classSchedule';
 import { Subject } from '@/src/types/subject';
@@ -51,12 +51,27 @@ export default function AdminSchedulesPage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
+
+  // Memoize fetchData to avoid useEffect dependency warning
+  const fetchData = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await Promise.all([fetchSchedules(), fetchSubjects()]);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Fetch data on component mount
   useEffect(() => {
     if (isAuthenticated) {
       fetchData();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchData]);
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -66,19 +81,7 @@ export default function AdminSchedulesPage() {
     }
   }, [successMessage]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await Promise.all([fetchSchedules(), fetchSubjects()]);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ...existing code...
 
   const fetchSchedules = async () => {
     try {
@@ -231,7 +234,7 @@ export default function AdminSchedulesPage() {
   });
 
   // Get unique values for filter dropdowns
-  const uniqueVenues = [...new Set(schedules.map(s => s.venue))].sort();
+  // const uniqueVenues = [...new Set(schedules.map(s => s.venue))].sort();
   const availableTypes = Object.keys(CLASS_TYPES).filter(key => key !== 'custom');
 
   if (viewMode !== 'list') {

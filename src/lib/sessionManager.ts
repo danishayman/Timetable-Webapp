@@ -1,7 +1,7 @@
 import { SelectedSubject, TimetableData, TimetableSlot, CustomSlot } from '@/src/types';
 import { STORAGE_KEYS, SESSION_EXPIRATION, DEFAULT_TIMETABLE_NAME } from './constants';
 import { generateId } from './utils';
-import { handleError, safeStorage, createAppError, ERROR_CODES } from './errorHandler';
+import { handleError, safeStorage } from './errorHandler';
 
 /**
  * Session Manager class
@@ -18,7 +18,7 @@ export class SessionManager {
     }
     
     try {
-      let sessionId = safeStorage.getItem(STORAGE_KEYS.SESSION_ID, null);
+      let sessionId = safeStorage.getItem(STORAGE_KEYS.SESSION_ID, null) as string | null;
       
       if (!sessionId) {
         sessionId = generateId();

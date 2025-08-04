@@ -5,7 +5,7 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { handleError, createAppError, ERROR_CODES } from '@/src/lib/errorHandler';
+import { handleError } from '@/src/lib/errorHandler';
 import { notifyError } from '@/src/lib/notifications';
 
 interface Props {
@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    const appError = handleError(error, {
+    handleError(error, {
       context: {
         operation: 'react_error_boundary',
         componentStack: errorInfo.componentStack,
@@ -107,7 +107,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </h2>
             
             <p className="text-gray-600 mb-6">
-              We encountered an unexpected error. This has been reported and we're working to fix it.
+              We encountered an unexpected error. This has been reported and we&apos;re working to fix it.
             </p>
             
             <div className="space-y-3">
@@ -196,9 +196,8 @@ export function ErrorTrigger({ children }: { children: ReactNode }) {
  * HOC for async error handling in React components
  */
 export function useAsyncError() {
-  const [, setError] = React.useState();
-  
-  return React.useCallback((error: any) => {
+  const [, setError] = React.useState<unknown>();
+  return React.useCallback((error: unknown) => {
     setError(() => {
       throw error;
     });

@@ -1,6 +1,5 @@
 import { DAYS_OF_WEEK, SHORT_DAYS, TIME_SLOTS } from './constants';
 import { v4 as uuidv4 } from 'uuid';
-import { TimetableSlot } from '@/src/types';
 
 /**
  * Generate a unique ID

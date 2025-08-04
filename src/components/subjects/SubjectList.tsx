@@ -24,8 +24,8 @@ interface SubjectListProps {
  * Displays a list of subjects from the subject store
  */
 export default function SubjectList({
-  showFilters = false,
-  showSearch = false,
+  // showFilters = false, // unused
+  // showSearch = false, // unused
   onSubjectClick,
   maxItems,
   filters,
@@ -49,7 +49,7 @@ export default function SubjectList({
   // Fetch subjects on component mount with optional filters
   useEffect(() => {
     fetchSubjects(filters);
-  }, [filters]); // Only depend on filters since Zustand functions are stable
+  }, [filters, fetchSubjects]);
 
   // Handle subject click based on props or default behavior
   const handleSubjectClick = (subject: Subject) => {

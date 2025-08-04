@@ -60,7 +60,7 @@ export default function UnplacedSubjects() {
             </span>
           </div>
           <p className="text-sm text-amber-700 dark:text-amber-300 mt-2">
-            These subjects couldn't be automatically placed due to scheduling conflicts. Please choose how to handle each one.
+            These subjects couldn&apos;t be automatically placed due to scheduling conflicts. Please choose how to handle each one.
           </p>
         </div>
         
