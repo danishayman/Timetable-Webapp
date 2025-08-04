@@ -100,7 +100,7 @@ export default function TimetablePage() {
             
             {(clashes.length > 0 || unplacedSlots.length > 0) && (
               <div className="ml-4 text-amber-600 font-medium">
-                {clashes.length + (unplacedSlots.length > 0 ? 1 : 0)} conflict{(clashes.length + (unplacedSlots.length > 0 ? 1 : 0)) !== 1 ? 's' : ''} - {timetableSlots.length - nonClashingSlots.length} classes excluded
+                {clashes.length + (unplacedSlots.length > 0 ? 1 : 0)} conflict{(clashes.length + (unplacedSlots.length > 0 ? 1 : 0)) !== 1 ? 's' : ''} - {timetableSlots.length - nonClashingSlots.length} session{(timetableSlots.length - nonClashingSlots.length) !== 1 ? 's' : ''} excluded
               </div>
             )}
           </div>
@@ -113,6 +113,7 @@ export default function TimetablePage() {
           <ConflictingSubjectsList 
             clashes={clashes}
             unplacedSlots={unplacedSlots}
+            allSlots={timetableSlots}
           />
         </div>
       )}
