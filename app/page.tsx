@@ -6,7 +6,7 @@ import { testConnection } from "@/src/lib/supabase";
 import TimetableGrid from "@/src/components/timetable/TimetableGrid";
 import TimetablePositioner from "@/src/components/timetable/TimetablePositioner";
 import ClassBlock from "@/src/components/timetable/ClassBlock";
-import UnplacedSubjects from "@/src/components/timetable/UnplacedSubjects";
+
 import ConflictingSubjectsList from "@/src/components/timetable/ConflictingSubjects";
 import SubjectSelectionModal from "@/src/components/common/SubjectSelectionModal";
 import useTimetableStore from "@/src/store/timetableStore";
@@ -205,12 +205,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Unplaced Subjects */}
-        {unplacedSlots.length > 0 && !isGenerating && (
-          <div className="mb-6">
-            <UnplacedSubjects />
-          </div>
-        )}
+
 
         {/* Timetable Grid */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
