@@ -38,6 +38,7 @@ export interface SubjectState {
 export interface TimetableState {
   sessionId: string;
   timetableSlots: TimetableSlot[];
+  unplacedSlots: TimetableSlot[];
   customSlots: CustomSlot[];
   clashes: Clash[];
   isGenerating: boolean;
@@ -47,6 +48,7 @@ export interface TimetableState {
   // Methods
   initializeStore: () => void;
   setTimetableSlots: (slots: TimetableSlot[]) => void;
+  setUnplacedSlots: (slots: TimetableSlot[]) => void;
   addTimetableSlot: (slot: TimetableSlot) => void;
   removeTimetableSlot: (slotId: string) => void;
   clearTimetableSlots: () => void;
@@ -64,6 +66,10 @@ export interface TimetableState {
   setTimetableName: (name: string) => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setError: (error: string | null) => void;
+  
+  // New methods for unplaced subject management
+  placeSubject: (slotId: string, action: 'place' | 'replace', conflictingSlotId?: string) => void;
+  removeUnplacedSubject: (slotId: string) => void;
   
   generateTimetable: () => Promise<TimetableSlot[]>;
   resetTimetable: () => void;

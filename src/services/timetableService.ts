@@ -6,11 +6,13 @@ import {
   TimetableSlot, 
   CustomSlot,
   SelectedSubject,
+  Clash,
   classScheduleToTimetableSlot,
   tutorialGroupToTimetableSlot
 } from '@/src/types/timetable';
 import { generateId, generateRandomColor } from '@/src/lib/utils';
 import { CLASS_TYPES } from '@/src/lib/constants';
+import { findAllClashes, checkNewSlotClashes } from '@/src/services/clashDetection';
 
 /**
  * Generate timetable slots from selected subjects
@@ -89,6 +91,52 @@ export async function generateTimetableFromSubjects(
     return timetableSlots;
   } catch (error) {
     console.error('Error generating timetable:', error);
+    throw new Error('Failed to generate timetable from selected subjects');
+  }
+}
+
+/**
+ * Generate timetable slots from selected subjects with clash filtering
+ * @param selectedSubjects Array of selected subjects with optional tutorial IDs
+ * @returns Promise resolving to object containing placed and unplaced slots
+ */
+export async function generateTimetableFromSubjectsWithClashFiltering(
+  selectedSubjects: SelectedSubject[]
+): Promise<{ placedSlots: TimetableSlot[]; unplacedSlots: TimetableSlot[]; clashes: Clash[] }> {
+  if (!selectedSubjects.length) {
+    return { placedSlots: [], unplacedSlots: [], clashes: [] };
+  }
+  
+  try {
+    // First, generate all possible slots
+    const allPotentialSlots = await generateTimetableFromSubjects(selectedSubjects);
+    
+    // Now filter out clashing slots
+    const placedSlots: TimetableSlot[] = [];
+    const unplacedSlots: TimetableSlot[] = [];
+    
+    // Process slots one by one, checking for clashes
+    for (const slot of allPotentialSlots) {
+      // Check if this slot would clash with any already placed slots
+      const wouldClash = checkNewSlotClashes(slot, placedSlots);
+      
+      if (wouldClash.length === 0) {
+        // No clash, place the slot
+        placedSlots.push(slot);
+      } else {
+        // Clash detected, add to unplaced
+        unplacedSlots.push(slot);
+      }
+    }
+    
+    // Calculate clashes for all slots (including unplaced ones for conflict resolution)
+    const allClashes = findAllClashes([...placedSlots, ...unplacedSlots]);
+    
+    console.log(`Placed ${placedSlots.length} slots, ${unplacedSlots.length} slots awaiting placement`);
+    
+    return { placedSlots, unplacedSlots, clashes: allClashes };
+  } catch (error) {
+    console.error('Error generating timetable with clash filtering:', error);
     throw new Error('Failed to generate timetable from selected subjects');
   }
 }

@@ -308,7 +308,8 @@ export default function TimetableGrid({
                   {React.Children.map(children, (child) => {
                     if (React.isValidElement(child)) {
                       // Clone child and add compactMode prop for mobile week view
-                      return React.cloneElement(child as React.ReactElement<any>, {
+                      return React.cloneElement(child, {
+                        ...child.props,
                         compactMode: true
                       });
                     }

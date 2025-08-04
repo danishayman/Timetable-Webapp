@@ -3,11 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { testConnection } from "@/src/lib/supabase";
-import { Clash } from "@/src/types/timetable";
 import TimetableGrid from "@/src/components/timetable/TimetableGrid";
 import TimetablePositioner from "@/src/components/timetable/TimetablePositioner";
 import ClassBlock from "@/src/components/timetable/ClassBlock";
-import ClashWarning from "@/src/components/timetable/ClashWarning";
+import UnplacedSubjects from "@/src/components/timetable/UnplacedSubjects";
 import SubjectSelectionModal from "@/src/components/common/SubjectSelectionModal";
 import useTimetableStore from "@/src/store/timetableStore";
 import useSubjectStore from "@/src/store/subjectStore";
@@ -16,7 +15,7 @@ export default function Home() {
   const [showWeekends, setShowWeekends] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [mobileViewMode, setMobileViewMode] = useState<'day' | 'week'>('week');
-  const { timetableSlots, clashes, initializeStore, generateTimetable, isGenerating, removeClash, removeTimetableSlot } = useTimetableStore();
+  const { timetableSlots, unplacedSlots, initializeStore, generateTimetable, isGenerating, placeSubject, removeUnplacedSubject, removeTimetableSlot } = useTimetableStore();
   const { selectedSubjects, initializeStore: initializeSubjectStore } = useSubjectStore();
 
   // Initialize both stores when component mounts
@@ -75,26 +74,6 @@ export default function Home() {
     clearSelectedSubjects();
   };
 
-  // Handle clash resolution
-  const handleResolveClash = (clashId: string, action: 'remove' | 'ignore', slotId?: string) => {
-    if (action === 'ignore') {
-      // Remove the clash from the list
-      removeClash(clashId);
-    } else if (action === 'remove' && slotId) {
-      // Remove the specified slot from the timetable
-      removeTimetableSlot(slotId);
-      // Remove the clash from the list (this should happen automatically due to clash detection rerun)
-      removeClash(clashId);
-    }
-  };
-
-  // Check if a slot has clashes
-  const hasClash = (slotId: string): boolean => {
-    return clashes.some(clash =>
-      clash.slot1.id === slotId || clash.slot2.id === slotId
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50 dark:from-slate-900 dark:via-purple-950/20 dark:to-indigo-950 relative overflow-hidden">
       {/* Background Pattern */}
@@ -141,12 +120,12 @@ export default function Home() {
                   {selectedSubjects.length} subject{selectedSubjects.length !== 1 ? 's' : ''} selected
                 </p>
               )}
-              {clashes.length > 0 && (
-                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-medium">
+              {unplacedSlots.length > 0 && (
+                <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-medium">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
-                  <span>{clashes.length} conflict{clashes.length !== 1 ? 's' : ''}</span>
+                  <span>{unplacedSlots.length} unplaced subject{unplacedSlots.length !== 1 ? 's' : ''}</span>
                 </div>
               )}
             </div>
@@ -215,36 +194,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* Clash Warnings */}
-        {clashes.length > 0 && !isGenerating && (
+        {/* Unplaced Subjects */}
+        {unplacedSlots.length > 0 && !isGenerating && (
           <div className="mb-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
-                <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-red-900 dark:text-red-100">
-                    Schedule Conflicts Detected
-                  </h3>
-                  <span className="ml-auto text-sm text-red-600 dark:text-red-400 font-medium">
-                    {clashes.length} conflict{clashes.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                <p className="text-sm text-red-700 dark:text-red-300 mt-2">
-                  The following scheduling conflicts need your attention. Please resolve them to ensure your timetable works properly.
-                </p>
-              </div>
-              <div className="p-4 sm:p-6 space-y-4">
-                {clashes.map((clash) => (
-                  <ClashWarning
-                    key={clash.id}
-                    clash={clash}
-                    onResolve={handleResolveClash}
-                  />
-                ))}
-              </div>
-            </div>
+            <UnplacedSubjects />
           </div>
         )}
 
@@ -263,7 +216,6 @@ export default function Home() {
                 showWeekends={showWeekends}
                 mobileViewMode={mobileViewMode}
                 onMobileViewModeChange={handleMobileViewModeChange}
-                clashes={clashes}
               >
                 {timetableSlots.map((slot) => (
                   <TimetablePositioner
@@ -275,7 +227,6 @@ export default function Home() {
                   >
                     <ClassBlock 
                       slot={slot} 
-                      isClashing={hasClash(slot.id)}
                     />
                   </TimetablePositioner>
                 ))}

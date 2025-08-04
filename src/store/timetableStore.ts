@@ -4,7 +4,7 @@ import { TimetableState } from '@/src/types/store';
 import { TimetableSlot, CustomSlot, Clash } from '@/src/types/timetable';
 import { generateId } from '@/src/lib/utils';
 import { DEFAULT_TIMETABLE_NAME } from '@/src/lib/constants';
-import { generateTimetableFromSubjects, addCustomSlotsToTimetable } from '@/src/services/timetableService';
+import { generateTimetableFromSubjectsWithClashFiltering, addCustomSlotsToTimetable } from '@/src/services/timetableService';
 import { findTimeClashes } from '@/src/services/clashDetection';
 import { SessionManager } from '@/src/lib/sessionManager';
 import { handleError, withRetry, safeStorage, ERROR_CODES } from '@/src/lib/errorHandler';
@@ -22,6 +22,7 @@ const useTimetableStore = create<TimetableState>()(
         // Initial state
         sessionId: SessionManager.getSessionId() || generateId(),
         timetableSlots: [],
+        unplacedSlots: [],
         customSlots: [],
         clashes: [],
         isGenerating: false,
@@ -315,6 +316,58 @@ const useTimetableStore = create<TimetableState>()(
         },
 
         /**
+         * Set unplaced slots
+         */
+        setUnplacedSlots: (slots: TimetableSlot[]) => {
+          set({ unplacedSlots: slots });
+        },
+
+        /**
+         * Place a subject from unplaced list
+         */
+        placeSubject: (slotId: string, action: 'place' | 'replace', conflictingSlotId?: string) => {
+          const { timetableSlots, unplacedSlots, customSlots, timetableName } = get();
+          
+          // Find the slot to place
+          const slotToPlace = unplacedSlots.find(slot => slot.id === slotId);
+          if (!slotToPlace) return;
+          
+          let newTimetableSlots = [...timetableSlots];
+          
+          if (action === 'replace' && conflictingSlotId) {
+            // Remove the conflicting slot
+            newTimetableSlots = newTimetableSlots.filter(slot => slot.id !== conflictingSlotId);
+          }
+          
+          // Add the slot to timetable
+          newTimetableSlots.push(slotToPlace);
+          
+          // Remove from unplaced
+          const newUnplacedSlots = unplacedSlots.filter(slot => slot.id !== slotId);
+          
+          // Detect clashes
+          const clashes = findTimeClashes(newTimetableSlots);
+          
+          set({ 
+            timetableSlots: newTimetableSlots,
+            unplacedSlots: newUnplacedSlots,
+            clashes 
+          });
+          
+          // Save to localStorage
+          SessionManager.saveTimetableData(newTimetableSlots, customSlots, timetableName);
+        },
+
+        /**
+         * Remove a subject from unplaced list
+         */
+        removeUnplacedSubject: (slotId: string) => {
+          const { unplacedSlots } = get();
+          const newUnplacedSlots = unplacedSlots.filter(slot => slot.id !== slotId);
+          set({ unplacedSlots: newUnplacedSlots });
+        },
+
+        /**
          * Set timetable name
          */
         setTimetableName: (name: string) => {
@@ -354,28 +407,27 @@ const useTimetableStore = create<TimetableState>()(
           set({ isGenerating: true, error: null });
           
           try {
-            // Generate timetable slots from selected subjects
-            const subjectSlots = await generateTimetableFromSubjects(selectedSubjects);
+            // Generate timetable with clash filtering
+            const { placedSlots, unplacedSlots, clashes } = await generateTimetableFromSubjectsWithClashFiltering(selectedSubjects);
             
-            // Add custom slots to the timetable
-            const allSlots = addCustomSlotsToTimetable(subjectSlots, customSlots);
+            // Add custom slots to the placed timetable slots
+            const allPlacedSlots = addCustomSlotsToTimetable(placedSlots, customSlots);
             
-            // Detect clashes
-            const clashes = findTimeClashes(allSlots);
-            
+            // Update state with both placed and unplaced slots
             set({ 
-              timetableSlots: allSlots,
+              timetableSlots: allPlacedSlots,
+              unplacedSlots,
               clashes,
               isGenerating: false 
             });
             
             // Save to localStorage
-            SessionManager.saveTimetableData(allSlots, customSlots, timetableName);
+            SessionManager.saveTimetableData(allPlacedSlots, customSlots, timetableName);
             
             // Also save selected subjects
             SessionManager.saveSelectedSubjects(selectedSubjects);
             
-            return allSlots;
+            return allPlacedSlots;
           } catch (error) {
             console.error('Error generating timetable:', error);
             set({ 
@@ -441,6 +493,7 @@ const useTimetableStore = create<TimetableState>()(
         resetTimetable: () => {
           set({
             timetableSlots: [],
+            unplacedSlots: [],
             customSlots: [],
             clashes: [],
             isGenerating: false,
