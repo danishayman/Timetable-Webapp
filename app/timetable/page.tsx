@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import TimetableGrid from '@/src/components/timetable/TimetableGrid';
-import TimetablePositioner from '@/src/components/timetable/TimetablePositioner';
-import ClassBlock from '@/src/components/timetable/ClassBlock';
-import ConflictingSubjectsList from '@/src/components/timetable/ConflictingSubjects';
-import Loading from '@/src/components/common/Loading';
-import ErrorMessage from '@/src/components/common/ErrorMessage';
-import useSubjectStore from '@/src/store/subjectStore';
-import useTimetableStore from '@/src/store/timetableStore';
-import { TimetableSlot } from '@/src/types/timetable';
+import TimetableGrid from '@/components/features/timetable/TimetableGrid';
+import TimetablePositioner from '@/components/features/timetable/TimetablePositioner';
+import ClassBlock from '@/components/features/timetable/ClassBlock';
+import ConflictingSubjectsList from '@/components/features/timetable/ConflictingSubjects';
+import Loading from '@/components/ui/feedback/Loading';
+import ErrorMessage from '@/components/ui/feedback/ErrorMessage';
+import useSubjectStore from '@/store/subjectStore';
+import useTimetableStore from '@/store/timetableStore';
+import { TimetableSlot } from '@/types/timetable';
 
 export default function TimetablePage() {
   const [isLoading, setIsLoading] = useState(false);

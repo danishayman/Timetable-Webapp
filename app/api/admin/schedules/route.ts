@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAdminClient } from '@/src/lib/supabase';
-import { ClassSchedule, CreateClassScheduleData, UpdateClassScheduleData } from '@/src/types/classSchedule';
-import { ApiResponse } from '@/src/types/api';
+import { getAdminClient } from '@/lib/supabase';
+import { ClassSchedule, CreateClassScheduleData, UpdateClassScheduleData } from '@/types/classSchedule';
+import { ApiResponse } from '@/types/api';
 
 /**
  * GET /api/admin/schedules

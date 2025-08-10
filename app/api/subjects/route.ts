@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/src/lib/supabase';
-import { ApiResponse, Subject } from '@/src/types';
-import { handleError } from '@/src/lib/errorHandler';
-import { ApiValidator, DataBoundaryValidator } from '@/src/lib/inputValidation';
+import { supabase } from '@/lib/supabase';
+import { ApiResponse, Subject } from '@/types';
+import { handleError } from '@/lib/errorHandler';
+import { ApiValidator, DataBoundaryValidator } from '@/lib/inputValidation';
 // Removed unused import: subjectFiltersSchema
 
 /**

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from 'react';
-import SubjectList from '@/src/components/subjects/SubjectList';
-import SubjectSearch from '@/src/components/subjects/SubjectSearch';
-import TutorialSelector from '@/src/components/subjects/TutorialSelector';
-import useSubjectStore from '@/src/store/subjectStore';
+import SubjectList from '@/components/features/subjects/SubjectList';
+import SubjectSearch from '@/components/features/subjects/SubjectSearch';
+import TutorialSelector from '@/components/features/subjects/TutorialSelector';
+import useSubjectStore from '@/store/subjectStore';
 
 export default function SubjectsPage() {
   const [refreshKey, setRefreshKey] = useState(0);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/src/lib/supabase';
-import { ApiResponse, Subject, CreateSubjectData, UpdateSubjectData } from '@/src/types';
+import { supabase } from '@/lib/supabase';
+import { ApiResponse, Subject, CreateSubjectData, UpdateSubjectData } from '@/types';
 
 /**
  * Authentication middleware for admin API routes

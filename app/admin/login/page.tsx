@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import AdminLoginForm from '@/src/components/auth/AdminLoginForm';
-import useAdminAuthStore from '@/src/store/adminAuthStore';
+import AdminLoginForm from '@/components/features/auth/AdminLoginForm';
+import useAdminAuthStore from '@/store/adminAuthStore';
 
 export default function AdminLoginPage() {
   const router = useRouter();

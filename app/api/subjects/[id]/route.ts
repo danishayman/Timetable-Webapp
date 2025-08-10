@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/src/lib/supabase';
-import { ApiResponse, SubjectWithSchedulesResponse } from '@/src/types';
-import { handleError } from '@/src/lib/errorHandler';
+import { supabase } from '@/lib/supabase';
+import { ApiResponse, SubjectWithSchedulesResponse } from '@/types';
+import { handleError } from '@/lib/errorHandler';
 
 /**
  * GET /api/subjects/[id]

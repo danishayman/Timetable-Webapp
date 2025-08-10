@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar, Plus, Edit, Trash2, Search, Filter, AlertCircle, CheckCircle, Loader2, ArrowLeft, Clock, MapPin, Users } from 'lucide-react';
-import ScheduleForm from '@/src/components/admin/ScheduleForm';
-import { ClassSchedule } from '@/src/types/classSchedule';
-import { Subject } from '@/src/types/subject';
-import useAdminAuthStore from '@/src/store/adminAuthStore';
-import { DAYS_OF_WEEK, CLASS_TYPES } from '@/src/lib/constants';
+import ScheduleForm from '@/components/features/admin/ScheduleForm';
+import { ClassSchedule } from '@/types/classSchedule';
+import { Subject } from '@/types/subject';
+import useAdminAuthStore from '@/store/adminAuthStore';
+import { DAYS_OF_WEEK, CLASS_TYPES } from '@/constants';
 
 interface FilterState {
   search: string;
