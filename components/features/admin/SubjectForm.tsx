@@ -16,7 +16,7 @@ interface SubjectFormProps {
   isLoading?: boolean;
 }
 
-interface FormData {
+interface SubjectFormData {
   code: string;
   name: string;
   credits: number;
@@ -36,7 +36,7 @@ interface FormErrors {
 }
 
 export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = false }: SubjectFormProps) {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<SubjectFormData>({
     code: '',
     name: '',
     credits: 3,
@@ -65,7 +65,7 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
   // Enhanced form validation using the new validation utilities
   const validateForm = (): boolean => {
     // Use the comprehensive FormValidator
-    const validationResult = FormValidator.validateSubjectForm(formData, {
+    const validationResult = FormValidator.validateSubjectForm(formData as unknown as Record<string, unknown>, {
       sanitize: true,
       checkEdgeCases: true
     });
@@ -95,7 +95,7 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
 
     // If validation passed, update form data with sanitized values
     if (validationResult.sanitizedData) {
-      setFormData(validationResult.sanitizedData);
+      setFormData(validationResult.sanitizedData as SubjectFormData);
     }
 
     setErrors({});
@@ -103,7 +103,7 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
   };
 
   // Handle input changes
-  const handleInputChange = (field: keyof FormData, value: string | number) => {
+  const handleInputChange = (field: keyof SubjectFormData, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

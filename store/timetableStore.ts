@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { TimetableState } from '@/types/store';
-import { TimetableSlot, CustomSlot, Clash } from '@/types/timetable';
+import { TimetableSlot, CustomSlot, Clash, customSlotToTimetableSlot } from '@/types/timetable';
 import { generateId } from '@/lib/utils';
 import { DEFAULT_TIMETABLE_NAME } from '@/constants';
 import { generateTimetableFromSubjectsWithClashFiltering, addCustomSlotsToTimetable, filterNonConflictingSlots, getConflictingSubjectCodes, getSubjectConflictStats } from '@/services/timetableService';
@@ -10,6 +10,38 @@ import { SessionManager } from '@/lib/sessionManager';
 import { handleError, withRetry, safeStorage, ERROR_CODES } from '@/lib/errorHandler';
 import { notify, notifyError, notifySuccess, notifyLoading } from '@/lib/notifications';
 import useSubjectStore from './subjectStore';
+
+/**
+ * Helper function to convert TimetableSlot[] to CustomSlot[] for storage
+ */
+const convertCustomSlotsForStorage = (customSlots: TimetableSlot[]): CustomSlot[] => {
+  return customSlots.map(slot => ({
+    id: slot.id,
+    title: slot.subject_name,
+    day_of_week: slot.day_of_week,
+    start_time: slot.start_time,
+    end_time: slot.end_time,
+    venue: slot.venue,
+    description: '',
+    color: slot.color
+  } as CustomSlot));
+};
+
+/**
+ * Helper function to convert TimetableSlot[] (custom slots) to CustomSlot[] for service functions
+ */
+const convertTimetableSlotsToCustomSlots = (timetableSlots: TimetableSlot[]): CustomSlot[] => {
+  return timetableSlots.filter(slot => slot.isCustom).map(slot => ({
+    id: slot.id,
+    title: slot.subject_name,
+    day_of_week: slot.day_of_week,
+    start_time: slot.start_time,
+    end_time: slot.end_time,
+    venue: slot.venue,
+    description: '',
+    color: slot.color
+  } as CustomSlot));
+};
 
 /**
  * Timetable store
@@ -41,9 +73,10 @@ const useTimetableStore = create<TimetableState>()(
             // Load timetable data from localStorage
             const timetableData = SessionManager.loadTimetableData();
             if (timetableData) {
+              const customSlotsAsTimetableSlots = (timetableData.custom_slots || []).map(customSlotToTimetableSlot);
               set({
                 timetableSlots: timetableData.timetable_slots || [],
-                customSlots: timetableData.custom_slots || [],
+                customSlots: customSlotsAsTimetableSlots,
                 timetableName: timetableData.name || DEFAULT_TIMETABLE_NAME,
                 sessionId: timetableData.session_id || SessionManager.getSessionId()
               });
@@ -79,7 +112,8 @@ const useTimetableStore = create<TimetableState>()(
             // Save to localStorage with error handling
             const { customSlots, timetableName } = get();
             try {
-              SessionManager.saveTimetableData(slots, customSlots, timetableName);
+              // Convert TimetableSlot back to CustomSlot for storage
+              SessionManager.saveTimetableData(slots, convertCustomSlotsForStorage(customSlots), timetableName);
             } catch (storageError) {
               console.warn('Failed to save timetable to localStorage:', storageError);
               notify.warning('Save Warning', 'Timetable changes may not persist after refresh.');
@@ -108,7 +142,7 @@ const useTimetableStore = create<TimetableState>()(
           });
           
           // Save to localStorage
-          SessionManager.saveTimetableData(newSlots, customSlots, timetableName);
+          SessionManager.saveTimetableData(newSlots, convertCustomSlotsForStorage(customSlots), timetableName);
         },
 
         /**
@@ -127,7 +161,7 @@ const useTimetableStore = create<TimetableState>()(
           });
           
           // Save to localStorage
-          SessionManager.saveTimetableData(newSlots, customSlots, timetableName);
+          SessionManager.saveTimetableData(newSlots, convertCustomSlotsForStorage(customSlots), timetableName);
         },
 
         /**
@@ -142,17 +176,18 @@ const useTimetableStore = create<TimetableState>()(
           });
           
           // Save to localStorage
-          SessionManager.saveTimetableData([], customSlots, timetableName);
+          SessionManager.saveTimetableData([], convertCustomSlotsForStorage(customSlots), timetableName);
         },
 
         /**
          * Add a custom slot
          */
-        addCustomSlot: (slot: Omit<CustomSlot, 'id'>) => {
-          const { customSlots, timetableSlots, timetableName, sessionId } = get();
-          const newSlot: CustomSlot = {
+        addCustomSlot: (slot: TimetableSlot) => {
+          const { customSlots, timetableSlots, timetableName } = get();
+          const newSlot: TimetableSlot = {
             ...slot,
-            id: generateId()
+            id: slot.id || generateId(),
+            isCustom: true
           };
           const newCustomSlots = [...customSlots, newSlot];
           
@@ -160,61 +195,45 @@ const useTimetableStore = create<TimetableState>()(
           set({ customSlots: newCustomSlots });
           
           // Update timetable slots with custom slots
-          if (timetableSlots.length > 0) {
-            const newTimetableSlots = addCustomSlotsToTimetable(
-              timetableSlots.filter(s => !s.isCustom), 
-              newCustomSlots
-            );
-            
-            // Detect clashes whenever slots change
-            const clashes = findTimeClashes(newTimetableSlots);
-            
-            set({ 
-              timetableSlots: newTimetableSlots,
-              clashes 
-            });
-            
-            // Save to localStorage
-            SessionManager.saveTimetableData(newTimetableSlots, newCustomSlots, timetableName);
-          } else {
-            // Save custom slots separately if no timetable slots
-            SessionManager.saveCustomSlots(newCustomSlots);
-          }
+          const allSlots = [...timetableSlots.filter(s => !s.isCustom), ...newCustomSlots];
+          
+          // Detect clashes whenever slots change
+          const clashes = findTimeClashes(allSlots);
+          
+          set({ 
+            timetableSlots: allSlots,
+            clashes 
+          });
+          
+          // Save to localStorage - convert TimetableSlot back to CustomSlot for storage
+          SessionManager.saveTimetableData(allSlots, convertCustomSlotsForStorage(newCustomSlots), timetableName);
         },
 
         /**
          * Update a custom slot
          */
-        updateCustomSlot: (id: string, updates: Partial<CustomSlot>) => {
-          const { customSlots, timetableSlots, timetableName, sessionId } = get();
+        updateCustomSlot: (slotId: string, updatedSlot: Partial<TimetableSlot>) => {
+          const { customSlots, timetableSlots, timetableName } = get();
           const newCustomSlots = customSlots.map(slot =>
-            slot.id === id ? { ...slot, ...updates } : slot
+            slot.id === slotId ? { ...slot, ...updatedSlot } : slot
           );
           
           // Update custom slots
           set({ customSlots: newCustomSlots });
           
           // Update timetable slots with custom slots
-          if (timetableSlots.length > 0) {
-            const newTimetableSlots = addCustomSlotsToTimetable(
-              timetableSlots.filter(s => !s.isCustom), 
-              newCustomSlots
-            );
-            
-            // Detect clashes whenever slots change
-            const clashes = findTimeClashes(newTimetableSlots);
-            
-            set({ 
-              timetableSlots: newTimetableSlots,
-              clashes 
-            });
-            
-            // Save to localStorage
-            SessionManager.saveTimetableData(newTimetableSlots, newCustomSlots, timetableName);
-          } else {
-            // Save custom slots separately if no timetable slots
-            SessionManager.saveCustomSlots(newCustomSlots);
-          }
+          const allSlots = [...timetableSlots.filter(s => !s.isCustom), ...newCustomSlots];
+          
+          // Detect clashes whenever slots change
+          const clashes = findTimeClashes(allSlots);
+          
+          set({ 
+            timetableSlots: allSlots,
+            clashes 
+          });
+          
+          // Save to localStorage - convert TimetableSlot back to CustomSlot for storage
+          SessionManager.saveTimetableData(allSlots, convertCustomSlotsForStorage(newCustomSlots), timetableName);
         },
 
         /**
@@ -228,26 +247,18 @@ const useTimetableStore = create<TimetableState>()(
           set({ customSlots: newCustomSlots });
           
           // Update timetable slots with custom slots
-          if (timetableSlots.length > 0) {
-            const newTimetableSlots = addCustomSlotsToTimetable(
-              timetableSlots.filter(s => !s.isCustom), 
-              newCustomSlots
-            );
-            
-            // Detect clashes whenever slots change
-            const clashes = findTimeClashes(newTimetableSlots);
-            
-            set({ 
-              timetableSlots: newTimetableSlots,
-              clashes 
-            });
-            
-            // Save to localStorage
-            SessionManager.saveTimetableData(newTimetableSlots, newCustomSlots, timetableName);
-          } else {
-            // Save custom slots separately if no timetable slots
-            SessionManager.saveCustomSlots(newCustomSlots);
-          }
+          const allSlots = [...timetableSlots.filter(s => !s.isCustom), ...newCustomSlots];
+          
+          // Detect clashes whenever slots change
+          const clashes = findTimeClashes(allSlots);
+          
+          set({ 
+            timetableSlots: allSlots,
+            clashes 
+          });
+          
+          // Save to localStorage
+          SessionManager.saveTimetableData(allSlots, convertCustomSlotsForStorage(newCustomSlots), timetableName);
         },
 
         /**
@@ -355,7 +366,7 @@ const useTimetableStore = create<TimetableState>()(
           });
           
           // Save to localStorage
-          SessionManager.saveTimetableData(newTimetableSlots, customSlots, timetableName);
+          SessionManager.saveTimetableData(newTimetableSlots, convertCustomSlotsForStorage(customSlots), timetableName);
         },
 
         /**
@@ -375,7 +386,7 @@ const useTimetableStore = create<TimetableState>()(
           set({ timetableName: name });
           
           // Save to localStorage
-          SessionManager.saveTimetableData(timetableSlots, customSlots, name);
+          SessionManager.saveTimetableData(timetableSlots, convertCustomSlotsForStorage(customSlots), name);
         },
 
         /**
@@ -411,7 +422,7 @@ const useTimetableStore = create<TimetableState>()(
             const { placedSlots, unplacedSlots, clashes } = await generateTimetableFromSubjectsWithClashFiltering(selectedSubjects);
             
             // Add custom slots to the placed timetable slots
-            const allPlacedSlots = addCustomSlotsToTimetable(placedSlots, customSlots);
+            const allPlacedSlots = [...placedSlots, ...customSlots];
             
             // Update state with both placed and unplaced slots
             set({ 
@@ -422,7 +433,7 @@ const useTimetableStore = create<TimetableState>()(
             });
             
             // Save to localStorage
-            SessionManager.saveTimetableData(allPlacedSlots, customSlots, timetableName);
+            SessionManager.saveTimetableData(allPlacedSlots, convertCustomSlotsForStorage(customSlots), timetableName);
             
             // Also save selected subjects
             SessionManager.saveSelectedSubjects(selectedSubjects);
@@ -470,7 +481,7 @@ const useTimetableStore = create<TimetableState>()(
           const { timetableSlots, customSlots, timetableName, sessionId } = get();
           
           // Save timetable data
-          SessionManager.saveTimetableData(timetableSlots, customSlots, timetableName);
+          SessionManager.saveTimetableData(timetableSlots, convertCustomSlotsForStorage(customSlots), timetableName);
           
           // Also save selected subjects
           const selectedSubjects = useSubjectStore.getState().selectedSubjects;
@@ -493,9 +504,10 @@ const useTimetableStore = create<TimetableState>()(
           
           const timetableData = SessionManager.loadTimetableData();
           if (timetableData) {
+            const customSlotsAsTimetableSlots = (timetableData.custom_slots || []).map(customSlotToTimetableSlot);
             set({
               timetableSlots: timetableData.timetable_slots || [],
-              customSlots: timetableData.custom_slots || [],
+              customSlots: customSlotsAsTimetableSlots,
               timetableName: timetableData.name || DEFAULT_TIMETABLE_NAME,
               sessionId: timetableData.session_id || SessionManager.getSessionId()
             });

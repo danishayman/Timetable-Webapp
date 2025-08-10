@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 
     // Use sanitized parameters
     const sanitizedParams = paramValidation.sanitizedData || queryParams;
-    const { department, semester, credits, search } = sanitizedParams;
+    const { department, semester, credits, search } = sanitizedParams as Record<string, string>;
 
     // Build query
     let query = supabase.from('subjects').select('*');

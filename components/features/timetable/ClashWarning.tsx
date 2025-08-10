@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Clash } from '@/src/types/timetable';
-import { formatDayOfWeek, formatTimeRange } from '@/src/lib/utils';
+import { Clash } from '@/types/timetable';
+import { formatDayOfWeek, formatTimeRange } from '@/lib/utils';
 
 interface ClashWarningProps {
   clash: Clash;

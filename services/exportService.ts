@@ -128,7 +128,7 @@ export class ExportService {
       const pdfBlob = pdf.output('blob');
       
       // Remove loading notification and show success
-      const { removeNotification } = require('@/src/lib/notifications');
+      const { removeNotification } = require('@/lib/notifications');
       removeNotification(loadingId);
       notifySuccess('PDF Generated', 'Your timetable PDF has been created successfully.');
       
@@ -136,7 +136,7 @@ export class ExportService {
       }, 2, 1000); // Retry up to 2 times with 1 second delay
     } catch (error) {
       // Remove loading notification and show error
-      const { removeNotification } = require('@/src/lib/notifications');
+      const { removeNotification } = require('@/lib/notifications');
       removeNotification(loadingId);
       
       const appError = handleError(error, {

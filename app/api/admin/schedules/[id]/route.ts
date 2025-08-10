@@ -9,13 +9,14 @@ import { ApiResponse } from '@/types/api';
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get admin Supabase client
     const adminClient = getAdminClient();
     
-    const { id } = params;
+    // Await params to get the id
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
@@ -85,13 +86,14 @@ export async function GET(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get admin Supabase client
     const adminClient = getAdminClient();
     
-    const { id } = params;
+    // Await params to get the id
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
@@ -288,13 +290,14 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get admin Supabase client
     const adminClient = getAdminClient();
     
-    const { id } = params;
+    // Await params to get the id
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(

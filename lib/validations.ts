@@ -241,7 +241,7 @@ export const validateBoundaries = {
   /**
    * Validate array length
    */
-  array: (value: any[], minLength: number, maxLength: number, fieldName: string) => {
+  array: (value: unknown[], minLength: number, maxLength: number, fieldName: string) => {
     if (!Array.isArray(value)) {
       return { isValid: false, error: `${fieldName} must be an array` };
     }
@@ -347,12 +347,13 @@ export const edgeCaseValidation = {
   /**
    * Check for excessively nested objects (for JSON inputs)
    */
-  isExcessivelyNested: (obj: any, maxDepth = 10): boolean => {
-    const checkDepth = (item: any, depth: number): boolean => {
+  isExcessivelyNested: (obj: unknown, maxDepth = 10): boolean => {
+    const checkDepth = (item: unknown, depth: number): boolean => {
       if (depth > maxDepth) return true;
       if (typeof item === 'object' && item !== null) {
-        for (const key in item) {
-          if (checkDepth(item[key], depth + 1)) return true;
+        const objItem = item as Record<string, unknown>;
+        for (const key in objItem) {
+          if (checkDepth(objItem[key], depth + 1)) return true;
         }
       }
       return false;

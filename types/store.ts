@@ -27,7 +27,7 @@ export interface SubjectState {
   clearFilters: () => void;
   selectSubject: (subject: Subject) => void;
   unselectSubject: (subjectId: string) => void;
-  selectTutorialGroup: (subjectId: string, tutorialGroupId: string) => void;
+  selectTutorialGroup: (subjectId: string, tutorialGroupId: string | null) => void;
   clearSelectedSubjects: () => void;
 }
 

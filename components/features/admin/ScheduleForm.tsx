@@ -21,7 +21,7 @@ interface ScheduleFormProps {
   isLoading?: boolean;
 }
 
-interface FormData {
+interface ScheduleFormData {
   subject_id: string;
   type: 'lecture' | 'tutorial' | 'lab' | 'practical';
   day_of_week: number;
@@ -66,7 +66,7 @@ export default function ScheduleForm({
   onCancel, 
   isLoading = false 
 }: ScheduleFormProps) {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<ScheduleFormData>({
     subject_id: defaultSubjectId || '',
     type: 'lecture',
     day_of_week: 1, // Monday
@@ -100,7 +100,7 @@ export default function ScheduleForm({
   const validateForm = (): boolean => {
     try {
       // Use comprehensive form validator for schedule data
-      const validationResult = FormValidator.validateScheduleForm(formData, {
+      const validationResult = FormValidator.validateScheduleForm(formData as unknown as Record<string, unknown>, {
         sanitize: true,
         checkEdgeCases: true
       });
@@ -137,7 +137,7 @@ export default function ScheduleForm({
 
       // Update form data with sanitized values if available
       if (validationResult.sanitizedData) {
-        setFormData(prev => ({ ...prev, ...validationResult.sanitizedData }));
+        setFormData(prev => ({ ...prev, ...(validationResult.sanitizedData as Partial<ScheduleFormData>) }));
       }
 
       setErrors({});
@@ -163,7 +163,7 @@ export default function ScheduleForm({
   };
 
   // Handle input changes
-  const handleInputChange = (field: keyof FormData, value: string | number) => {
+  const handleInputChange = (field: keyof ScheduleFormData, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

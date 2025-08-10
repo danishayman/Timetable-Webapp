@@ -266,7 +266,7 @@ const useSubjectStore = create<SubjectState>()(
         /**
          * Select a tutorial group for a subject
          */
-        selectTutorialGroup: (subjectId: string, tutorialGroupId: string) => {
+        selectTutorialGroup: (subjectId: string, tutorialGroupId: string | null) => {
           try {
             const { selectedSubjects } = get();
             
@@ -283,17 +283,21 @@ const useSubjectStore = create<SubjectState>()(
               SessionManager.saveSelectedSubjects(updatedSubjects);
               const subject = updatedSubjects.find(s => s.subject_id === subjectId);
               if (subject) {
-                notify.success('Tutorial Selected', `Tutorial group selected for ${subject.subject_code}.`);
+                if (tutorialGroupId) {
+                  notify.success('Tutorial Selected', `Tutorial group selected for ${subject.subject_code}.`);
+                } else {
+                  notify.success('Tutorial Deselected', `Tutorial group deselected for ${subject.subject_code}.`);
+                }
               }
             } catch (storageError) {
               console.warn('Failed to save to localStorage:', storageError);
-              notify.warning('Partial Success', 'Tutorial was selected but may not persist after refresh.');
+              notify.warning('Partial Success', 'Tutorial was updated but may not persist after refresh.');
             }
           } catch (error) {
             const appError = handleError(error, {
               context: { operation: 'select_tutorial_group', subjectId, tutorialGroupId }
             });
-            notifyError('Failed to Select Tutorial', appError.message);
+            notifyError('Failed to Update Tutorial', appError.message);
           }
         },
         

@@ -70,7 +70,7 @@ export interface SelectedSubject {
   subject_id: string;
   subject_code?: string;
   subject_name?: string;
-  tutorial_group_id?: string;
+  tutorial_group_id?: string | null;
   color?: string;
 }
 
