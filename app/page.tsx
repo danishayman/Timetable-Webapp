@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { testConnection } from "@/src/lib/supabase";
-import TimetableGrid from "@/src/components/timetable/TimetableGrid";
-import TimetablePositioner from "@/src/components/timetable/TimetablePositioner";
-import ClassBlock from "@/src/components/timetable/ClassBlock";
+import { testConnection } from "@/lib/supabase";
+import TimetableGrid from "@/components/features/timetable/TimetableGrid";
+import TimetablePositioner from "@/components/features/timetable/TimetablePositioner";
+import ClassBlock from "@/components/features/timetable/ClassBlock";
 
-import ConflictingSubjectsList from "@/src/components/timetable/ConflictingSubjects";
-import SubjectSelectionModal from "@/src/components/common/SubjectSelectionModal";
-import useTimetableStore from "@/src/store/timetableStore";
-import useSubjectStore from "@/src/store/subjectStore";
+import ConflictingSubjectsList from "@/components/features/timetable/ConflictingSubjects";
+import SubjectSelectionModal from "@/components/ui/modals/SubjectSelectionModal";
+import useTimetableStore from "@/store/timetableStore";
+import useSubjectStore from "@/store/subjectStore";
 
 export default function Home() {
   const [showWeekends, setShowWeekends] = useState(false);

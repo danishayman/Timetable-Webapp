@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Plus, Edit, Trash2, Search, Filter, AlertCircle, CheckCircle, Loader2, ArrowLeft } from 'lucide-react';
-import SubjectForm from '@/src/components/admin/SubjectForm';
-import { Subject } from '@/src/types';
-import useAdminAuthStore from '@/src/store/adminAuthStore';
+import SubjectForm from '@/components/features/admin/SubjectForm';
+import { Subject } from '@/types';
+import useAdminAuthStore from '@/store/adminAuthStore';
 
 interface FilterState {
   search: string;

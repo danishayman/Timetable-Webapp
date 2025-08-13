@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import Navbar from "@/src/components/layout/Navbar";
-import Footer from "@/src/components/layout/Footer";
-import { NotificationContainer } from "@/src/components/common/NotificationContainer";
-import { ErrorBoundary } from "@/src/components/common/ErrorBoundary";
+import "@/styles/globals.css";
+import Navbar from "@/components/ui/layout/Navbar";
+import Footer from "@/components/ui/layout/Footer";
+import { NotificationContainer } from "@/components/ui/feedback/NotificationContainer";
+import { ErrorBoundary } from "@/components/ui/feedback/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

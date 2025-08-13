@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/src/lib/supabase';
-import { ApiResponse, TutorialGroup } from '@/src/types';
+import { supabase } from '@/lib/supabase';
+import { ApiResponse, TutorialGroup } from '@/types';
 
 /**
  * GET /api/tutorials/[id]
