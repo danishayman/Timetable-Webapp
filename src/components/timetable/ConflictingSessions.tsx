@@ -31,7 +31,7 @@ const InformationCircleIcon = ({ className }: { className?: string }) => (
 
 const CheckCircleIcon = ({ className, title }: { className?: string; title?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <title>{title}</title>
+    {title && <title>{title}</title>}
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
@@ -59,7 +59,7 @@ interface ConflictGroup {
   isMultiSubjectOverlap: boolean;
 }
 
-interface ConflictingSubjectsListProps {
+interface ConflictingSessionsProps {
   clashes: Clash[];
   unplacedSlots: TimetableSlot[];
   allSlots: TimetableSlot[];
@@ -82,17 +82,21 @@ const calculateOverlapDuration = (startTime: string, endTime: string): string =>
 };
 
 /**
- * ConflictingSubjectsList component
- * Displays all subjects that have scheduling conflicts in a clean, organized format
- * Avoids duplicate entries and groups overlapping subjects intelligently
- * Shows partial conflict information (e.g., "1 of 3 classes excluded")
+ * ConflictingSessions component
+ * Displays scheduling conflicts in a compact, expandable format
+ * Features:
+ * - Compact summary view with subject codes, day, time, and overlap duration
+ * - Expandable accordion for detailed conflict information
+ * - Color-coded status indicators (red for clash, green for still included)
+ * - Helpful tooltip for conflict resolution guidance
+ * - Responsive design for desktop and mobile
  */
-export default function ConflictingSubjectsList({ 
+export default function ConflictingSessions({ 
   clashes, 
   unplacedSlots, 
   allSlots,
   className = "" 
-}: ConflictingSubjectsListProps) {
+}: ConflictingSessionsProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
   const helpTooltipRef = useRef<HTMLDivElement>(null);
@@ -320,33 +324,33 @@ export default function ConflictingSubjectsList({
   }
   
   return (
-    <div className={`bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 sm:p-6 ${className}`}>
+    <div className={`bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 sm:p-4 lg:p-6 ${className}`}>
       {/* Header with help tooltip */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="flex items-center">
-          <ExclamationTriangleIcon className="w-6 h-6 text-red-600 dark:text-red-400 mr-3" />
-          <div>
-            <h3 className="text-lg font-semibold text-red-800 dark:text-red-300">
+          <ExclamationTriangleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400 mr-2 sm:mr-3 flex-shrink-0" />
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base sm:text-lg font-semibold text-red-800 dark:text-red-300">
               Schedule Conflicts
             </h3>
-            <p className="text-sm text-red-600 dark:text-red-400">
+            <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 break-words">
               {Array.from(subjectStats.values()).reduce((total, stat) => total + stat.conflicting, 0)} session{Array.from(subjectStats.values()).reduce((total, stat) => total + stat.conflicting, 0) !== 1 ? 's' : ''} from {subjectStats.size} subject{subjectStats.size !== 1 ? 's' : ''} excluded
             </p>
           </div>
         </div>
         
         {/* Help tooltip */}
-        <div className="relative" ref={helpTooltipRef}>
+        <div className="relative flex-shrink-0 self-start sm:self-auto" ref={helpTooltipRef}>
           <button
             onClick={() => setShowHelpTooltip(!showHelpTooltip)}
-            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors"
+            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors touch-manipulation"
             title="Help resolving conflicts"
           >
             <InformationCircleIcon className="w-5 h-5" />
           </button>
           
           {showHelpTooltip && (
-            <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4 z-10">
+            <div className="absolute top-full right-0 sm:right-0 mt-2 w-80 sm:w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4 z-20">
               <h4 className="font-medium text-gray-900 dark:text-white mb-2">How to resolve conflicts:</h4>
               <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 <li>• Choose different tutorial groups</li>
@@ -376,91 +380,93 @@ export default function ConflictingSubjectsList({
             >
               {/* Compact summary header */}
               <div 
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                className="flex items-start sm:items-center justify-between p-3 sm:p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors touch-manipulation"
                 onClick={() => toggleGroupExpansion(group.id)}
               >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <ExclamationTriangleIcon className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <ExclamationTriangleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 flex-shrink-0 mt-0.5 sm:mt-0" />
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-gray-900 dark:text-white">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1 sm:mb-1">
+                      <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white break-words">
                         {subjectCodes.join(', ')}
                       </span>
-                      {group.isMultiSubjectOverlap && (
-                        <span className="text-xs px-2 py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded-full">
-                          Multi-overlap
-                        </span>
-                      )}
-                      {hasOtherSessions && (
-                        <CheckCircleIcon className="w-4 h-4 text-green-500" title="Other sessions still included" />
-                      )}
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        {group.isMultiSubjectOverlap && (
+                          <span className="text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded-full flex-shrink-0">
+                            Multi-overlap
+                          </span>
+                        )}
+                        {hasOtherSessions && (
+                          <CheckCircleIcon className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" title="Other sessions still included" />
+                        )}
+                      </div>
                     </div>
                     
-                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                      <span>{group.conflictInfo.day} {group.conflictInfo.time}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                      <span className="break-words">{group.conflictInfo.day} {group.conflictInfo.time}</span>
                       {group.conflictInfo.duration && (
-                        <span className="flex items-center gap-1">
-                          <ClockIcon className="w-4 h-4" />
-                          Overlap: {group.conflictInfo.duration}
+                        <span className="flex items-center gap-1 flex-shrink-0">
+                          <ClockIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="whitespace-nowrap">Overlap: {group.conflictInfo.duration}</span>
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0 pl-2">
                   {isExpanded ? (
-                    <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+                    <ChevronDownIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                   ) : (
-                    <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+                    <ChevronRightIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                   )}
                 </div>
               </div>
 
               {/* Expanded details */}
               {isExpanded && (
-                <div className="border-t border-gray-200 dark:border-gray-600 p-4 bg-gray-50 dark:bg-gray-700/30">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="border-t border-gray-200 dark:border-gray-600 p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/30">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                     {group.subjects.map((subject) => {
                       const stats = subjectStats.get(subject.subject_code);
                       return (
-                        <div key={subject.subject_code} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                        <div key={subject.subject_code} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3 sm:p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-1 break-words">
                                 {subject.subject_code}
                               </h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 break-words">
                                 {subject.subject_name}
                               </p>
                             </div>
                             
                             {stats && stats.nonConflicting > 0 && (
-                              <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">
-                                <CheckCircleIcon className="w-3 h-3" />
-                                <span>{stats.nonConflicting} other session{stats.nonConflicting !== 1 ? 's' : ''} included</span>
+                              <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded flex-shrink-0 self-start">
+                                <CheckCircleIcon className="w-3 h-3 flex-shrink-0" />
+                                <span className="whitespace-nowrap">{stats.nonConflicting} other session{stats.nonConflicting !== 1 ? 's' : ''} included</span>
                               </div>
                             )}
                           </div>
 
                           {/* Conflicting sessions */}
-                          <div className="mb-4">
+                          <div className="mb-3 sm:mb-4">
                             <h5 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                               Conflicting Sessions ({subject.slots.length})
                             </h5>
                             <div className="space-y-2">
                               {subject.slots.map((slot) => (
-                                <div key={slot.id} className="text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded px-3 py-2">
-                                  <div className="flex items-center justify-between">
+                                <div key={slot.id} className="text-xs sm:text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded px-2 sm:px-3 py-2">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                                     <span className="font-medium text-red-800 dark:text-red-300">
                                       {slot.type.charAt(0).toUpperCase() + slot.type.slice(1)}
                                     </span>
-                                    <span className="text-xs text-red-600 dark:text-red-400">
+                                    <span className="text-xs text-red-600 dark:text-red-400 break-words">
                                       {formatDayOfWeek(slot.day_of_week)} • {formatTimeRange(slot.start_time, slot.end_time)}
                                     </span>
                                   </div>
-                                  <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                  <div className="text-xs text-red-600 dark:text-red-400 mt-1 break-words">
                                     📍 {slot.venue}
                                     {slot.instructor && <span> • 👨‍🏫 {slot.instructor}</span>}
                                   </div>
@@ -470,17 +476,17 @@ export default function ConflictingSubjectsList({
                           </div>
 
                           {/* Action buttons */}
-                          <div className="flex gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <button
                               disabled
-                              className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed text-sm font-medium transition-colors"
+                              className="flex-1 px-3 py-2.5 sm:py-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed text-xs sm:text-sm font-medium transition-colors touch-manipulation"
                               title="Feature coming soon"
                             >
                               View Other Slots
                             </button>
                             <button
                               disabled
-                              className="flex-1 px-3 py-2 bg-red-100 dark:bg-red-900/50 text-red-500 dark:text-red-400 rounded-lg cursor-not-allowed text-sm font-medium transition-colors"
+                              className="flex-1 px-3 py-2.5 sm:py-2 bg-red-100 dark:bg-red-900/50 text-red-500 dark:text-red-400 rounded-lg cursor-not-allowed text-xs sm:text-sm font-medium transition-colors touch-manipulation"
                               title="Feature coming soon"
                             >
                               Remove Subject
