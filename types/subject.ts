@@ -9,7 +9,7 @@ export interface Subject {
   credits: number;
   description: string | null;
   semester: string | null;
-  department: string | null;
+  school_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,10 +21,10 @@ export interface Subject {
 export interface CreateSubjectData {
   code: string;
   name: string;
+  school_id: string;
   credits?: number;
   description?: string;
   semester?: string;
-  department?: string;
 }
 
 /**
@@ -34,10 +34,10 @@ export interface CreateSubjectData {
 export interface UpdateSubjectData {
   code?: string;
   name?: string;
+  school_id?: string;
   credits?: number;
   description?: string;
   semester?: string;
-  department?: string;
 }
 
 /**
@@ -45,7 +45,7 @@ export interface UpdateSubjectData {
  * Used for filtering subjects in search
  */
 export interface SubjectFilters {
-  department?: string;
+  school_id?: string;
   semester?: string;
   credits?: number;
 } 

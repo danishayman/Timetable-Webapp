@@ -282,7 +282,6 @@ export default function ScheduleForm({
           )}
           {selectedSubject && (
             <p className="mt-1 text-sm text-gray-500">
-              {selectedSubject.department && `${selectedSubject.department} • `}
               {selectedSubject.credits} {selectedSubject.credits === 1 ? 'Credit' : 'Credits'}
             </p>
           )}

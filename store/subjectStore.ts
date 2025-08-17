@@ -75,8 +75,8 @@ const useSubjectStore = create<SubjectState>()(
               let query = supabase.from('subjects').select('*');
               
               // Apply filters if provided
-              if (filters.department) {
-                query = query.eq('department', filters.department);
+              if (filters.school_id) {
+                query = query.eq('school_id', filters.school_id);
               }
               if (filters.semester) {
                 query = query.eq('semester', filters.semester);

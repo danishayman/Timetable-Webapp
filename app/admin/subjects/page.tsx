@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Plus, Edit, Trash2, Search, Filter, AlertCircle, CheckCircle, Loader2, ArrowLeft } from 'lucide-react';
 import SubjectForm from '@/components/features/admin/SubjectForm';
-import { Subject } from '@/types';
+import { Subject, School } from '@/types';
 import useAdminAuthStore from '@/store/adminAuthStore';
 
 interface FilterState {
   search: string;
-  department: string;
+  school_id: string;
   semester: string;
   credits: string;
 }
@@ -20,13 +20,14 @@ export default function AdminSubjectsPage() {
   const router = useRouter();
   const { isAuthenticated, checkAuth, isLoading: authLoading } = useAdminAuthStore();
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [editingSubject, setEditingSubject] = useState<Subject | undefined>(undefined);
   const [filters, setFilters] = useState<FilterState>({
     search: '',
-    department: '',
+    school_id: '',
     semester: '',
     credits: ''
   });
@@ -45,12 +46,32 @@ export default function AdminSubjectsPage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  // Fetch subjects on component mount
+  // Fetch subjects and schools on component mount
   useEffect(() => {
     if (isAuthenticated) {
       fetchSubjects();
+      fetchSchools();
     }
   }, [isAuthenticated]);
+
+  const fetchSchools = async () => {
+    try {
+      const response = await fetch('/api/admin/schools', {
+        headers: {
+          'Authorization': 'Bearer mock-token-for-testing', // TODO: Replace with real auth token
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setSchools(result.data || []);
+      } else {
+        console.error('Failed to fetch schools');
+      }
+    } catch (error) {
+      console.error('Error fetching schools:', error);
+    }
+  };
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -140,7 +161,7 @@ export default function AdminSubjectsPage() {
   const clearFilters = () => {
     setFilters({
       search: '',
-      department: '',
+      school_id: '',
       semester: '',
       credits: ''
     });
@@ -175,8 +196,8 @@ export default function AdminSubjectsPage() {
       subject.code.toLowerCase().includes(filters.search.toLowerCase()) ||
       subject.name.toLowerCase().includes(filters.search.toLowerCase());
     
-    const matchesDepartment = !filters.department || 
-      (subject.department && subject.department.toLowerCase().includes(filters.department.toLowerCase()));
+    const matchesSchool = !filters.school_id || 
+      subject.school_id === filters.school_id;
     
     const matchesSemester = !filters.semester || 
       (subject.semester && subject.semester.toLowerCase().includes(filters.semester.toLowerCase()));
@@ -184,13 +205,18 @@ export default function AdminSubjectsPage() {
     const matchesCredits = !filters.credits || 
       subject.credits.toString() === filters.credits;
 
-    return matchesSearch && matchesDepartment && matchesSemester && matchesCredits;
+    return matchesSearch && matchesSchool && matchesSemester && matchesCredits;
   });
 
   // Get unique values for filter dropdowns
-  const departments = [...new Set(subjects.map(s => s.department).filter((dept): dept is string => Boolean(dept)))];
   const semesters = [...new Set(subjects.map(s => s.semester).filter((sem): sem is string => Boolean(sem)))];
   const creditOptions = [...new Set(subjects.map(s => s.credits))].sort((a, b) => a - b);
+
+  // Helper function to get school name by ID
+  const getSchoolName = (schoolId: string) => {
+    const school = schools.find(s => s.id === schoolId);
+    return school?.name || 'Unknown School';
+  };
 
   if (viewMode !== 'list') {
     return (
@@ -298,15 +324,15 @@ export default function AdminSubjectsPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">School</label>
                 <select
-                  value={filters.department}
-                  onChange={(e) => handleFilterChange('department', e.target.value)}
+                  value={filters.school_id}
+                  onChange={(e) => handleFilterChange('school_id', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Departments</option>
-                  {departments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
+                  <option value="">All Schools</option>
+                  {schools.map(school => (
+                    <option key={school.id} value={school.id}>{school.name}</option>
                   ))}
                 </select>
               </div>
@@ -390,7 +416,7 @@ export default function AdminSubjectsPage() {
                     Credits
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Department
+                    School
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Semester
@@ -418,7 +444,7 @@ export default function AdminSubjectsPage() {
                       {subject.credits}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {subject.department || '—'}
+                      {getSchoolName(subject.school_id)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {subject.semester || '—'}

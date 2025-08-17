@@ -5,7 +5,7 @@ import useSubjectStore from '@/store/subjectStore';
 import { SubjectFilters } from '@/types/subject';
 
 interface SubjectSearchProps {
-  showDepartmentFilter?: boolean;
+  showSchoolFilter?: boolean;
   showSemesterFilter?: boolean;
   showCreditsFilter?: boolean;
   onSearch?: () => void;
@@ -17,7 +17,7 @@ interface SubjectSearchProps {
  * Provides search and filter controls for subjects
  */
 export default function SubjectSearch({
-  showDepartmentFilter = true,
+  showSchoolFilter = true,
   showSemesterFilter = true,
   showCreditsFilter = false,
   onSearch,
@@ -28,7 +28,7 @@ export default function SubjectSearch({
 
   // Local state for form inputs
   const [searchTerm, setSearchTerm] = useState('');
-  const [department, setDepartment] = useState('');
+  const [schoolId, setSchoolId] = useState('');
   const [semester, setSemester] = useState('');
   const [credits, setCredits] = useState<string>('');
 
@@ -46,7 +46,7 @@ export default function SubjectSearch({
   const handleApplyFilters = () => {
     const filters: SubjectFilters = {};
     
-    if (department) filters.department = department;
+    if (schoolId) filters.school_id = schoolId;
     if (semester) filters.semester = semester;
     if (credits) filters.credits = parseInt(credits, 10);
     
@@ -60,7 +60,7 @@ export default function SubjectSearch({
   // Reset all filters and search
   const handleResetFilters = () => {
     setSearchTerm('');
-    setDepartment('');
+    setSchoolId('');
     setSemester('');
     setCredits('');
     setSearchQuery('');
@@ -94,17 +94,17 @@ export default function SubjectSearch({
       
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {showDepartmentFilter && (
+        {showSchoolFilter && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Department
+              School
             </label>
             <input
               type="text"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
+              value={schoolId}
+              onChange={(e) => setSchoolId(e.target.value)}
               className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-              placeholder="e.g. Computer Science"
+              placeholder="e.g. School of Engineering"
             />
           </div>
         )}

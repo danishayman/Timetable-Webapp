@@ -58,18 +58,11 @@ export default function SubjectCard({
         </span>
       </div>
 
-      {(subject.department || subject.semester) && (
+      {subject.semester && (
         <div className="mt-2 flex flex-wrap gap-2">
-          {subject.department && (
-            <span className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400">
-              {subject.department}
-            </span>
-          )}
-          {subject.semester && (
-            <span className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400">
-              • {subject.semester}
-            </span>
-          )}
+          <span className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400">
+            {subject.semester}
+          </span>
         </div>
       )}
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Subject, CreateSubjectData, UpdateSubjectData } from '@/types';
+import { Subject, CreateSubjectData, UpdateSubjectData, School } from '@/types';
 import { FormValidator } from '@/lib/inputValidation';
 
 
@@ -19,19 +19,19 @@ interface SubjectFormProps {
 interface SubjectFormData {
   code: string;
   name: string;
+  school_id: string;
   credits: number;
   description: string;
   semester: string;
-  department: string;
 }
 
 interface FormErrors {
   code?: string;
   name?: string;
+  school_id?: string;
   credits?: string;
   description?: string;
   semester?: string;
-  department?: string;
   submit?: string;
 }
 
@@ -39,14 +39,42 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
   const [formData, setFormData] = useState<SubjectFormData>({
     code: '',
     name: '',
+    school_id: '',
     credits: 3,
     description: '',
     semester: '',
-    department: '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [loadingSchools, setLoadingSchools] = useState(true);
+
+  // Fetch schools on component mount
+  useEffect(() => {
+    const fetchSchools = async () => {
+      try {
+        const response = await fetch('/api/admin/schools', {
+          headers: {
+            'Authorization': 'Bearer mock-token-for-testing', // TODO: Replace with real auth token
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setSchools(result.data || []);
+        } else {
+          console.error('Failed to fetch schools');
+        }
+      } catch (error) {
+        console.error('Error fetching schools:', error);
+      } finally {
+        setLoadingSchools(false);
+      }
+    };
+
+    fetchSchools();
+  }, []);
 
   // Pre-populate form when editing existing subject
   useEffect(() => {
@@ -54,48 +82,46 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
       setFormData({
         code: subject.code || '',
         name: subject.name || '',
+        school_id: subject.school_id || '',
         credits: subject.credits || 3,
         description: subject.description || '',
         semester: subject.semester || '',
-        department: subject.department || '',
       });
     }
   }, [subject]);
 
-  // Enhanced form validation using the new validation utilities
+  // Enhanced form validation
   const validateForm = (): boolean => {
-    // Use the comprehensive FormValidator
-    const validationResult = FormValidator.validateSubjectForm(formData as unknown as Record<string, unknown>, {
-      sanitize: true,
-      checkEdgeCases: true
-    });
+    const newErrors: FormErrors = {};
 
-    if (!validationResult.isValid) {
-      // Convert validation errors to form error format
-      const newErrors: FormErrors = {};
-      validationResult.errors.forEach(error => {
-        if (error.includes('code')) {
-          newErrors.code = error;
-        } else if (error.includes('name')) {
-          newErrors.name = error;
-        } else if (error.includes('credits')) {
-          newErrors.credits = error;
-        } else if (error.includes('description')) {
-          newErrors.description = error;
-        } else if (error.includes('semester')) {
-          newErrors.semester = error;
-        } else if (error.includes('department')) {
-          newErrors.department = error;
-        }
-      });
-      
-      setErrors(newErrors);
-      return false;
+    // Validate required fields
+    if (!formData.code.trim()) {
+      newErrors.code = 'Subject code is required';
+    } else if (formData.code.length < 2) {
+      newErrors.code = 'Subject code must be at least 2 characters';
     }
 
-    // If validation passed, update form data with sanitized values
-    if (validationResult.sanitizedData) {
-      setFormData(validationResult.sanitizedData as SubjectFormData);
+    if (!formData.name.trim()) {
+      newErrors.name = 'Subject name is required';
+    } else if (formData.name.length < 3) {
+      newErrors.name = 'Subject name must be at least 3 characters';
+    }
+
+    if (!formData.school_id) {
+      newErrors.school_id = 'Please select a school';
+    }
+
+    if (formData.credits < 1 || formData.credits > 12) {
+      newErrors.credits = 'Credits must be between 1 and 12';
+    }
+
+    if (formData.description && formData.description.length > 1000) {
+      newErrors.description = 'Description must be less than 1000 characters';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return false;
     }
 
     setErrors({});
@@ -215,6 +241,44 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
           )}
         </div>
 
+        {/* School Selection */}
+        <div>
+          <label htmlFor="school_id" className="block text-sm font-medium text-gray-700 mb-2">
+            School *
+          </label>
+          {loadingSchools ? (
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 flex items-center">
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span className="text-gray-500">Loading schools...</span>
+            </div>
+          ) : (
+            <select
+              id="school_id"
+              value={formData.school_id}
+              onChange={(e) => handleInputChange('school_id', e.target.value)}
+              disabled={isFormDisabled}
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
+                errors.school_id ? 'border-red-500' : 'border-gray-300'
+              }`}
+            >
+              <option value="">Select a school...</option>
+              {schools.map(school => (
+                <option key={school.id} value={school.id}>
+                  {school.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {errors.school_id && (
+            <p className="mt-1 text-sm text-red-600">{errors.school_id}</p>
+          )}
+          {!loadingSchools && schools.length === 0 && (
+            <p className="mt-1 text-sm text-yellow-600">
+              No schools available. Please create a school first.
+            </p>
+          )}
+        </div>
+
         {/* Credits */}
         <div>
           <label htmlFor="credits" className="block text-sm font-medium text-gray-700 mb-2">
@@ -240,26 +304,7 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
           )}
         </div>
 
-        {/* Department */}
-        <div>
-          <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
-            Department
-          </label>
-          <input
-            id="department"
-            type="text"
-            value={formData.department}
-            onChange={(e) => handleInputChange('department', e.target.value)}
-            disabled={isFormDisabled}
-            placeholder="e.g., Computer Science, Mathematics"
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
-              errors.department ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.department && (
-            <p className="mt-1 text-sm text-red-600">{errors.department}</p>
-          )}
-        </div>
+
 
         {/* Semester */}
         <div>

@@ -1,81 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { ApiResponse, Subject, CreateSubjectData, UpdateSubjectData } from '@/types';
+import { verifyAdminAuth } from '@/lib/adminAuth';
 
-/**
- * Authentication middleware for admin API routes
- * Verifies that the user is authenticated and is an admin
- * Supports development mode with mock tokens for testing
- */
-async function verifyAdminAuth(request: Request): Promise<{ success: boolean; error?: string; adminId?: string }> {
-  try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return { success: false, error: 'Missing or invalid authorization header' };
-    }
 
-    // Extract the token
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      return { success: false, error: 'Missing access token' };
-    }
-
-    // Development mode: Allow mock tokens for testing
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    if (isDevelopment && token === 'mock-token-for-testing') {
-      console.log('Development mode: Using mock admin authentication');
-      return { 
-        success: true, 
-        adminId: 'mock-admin-id'
-      };
-    }
-
-    // Production mode: Verify with Supabase
-    try {
-      // Create a Supabase client for server-side auth verification
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-      
-      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      });
-
-      // Verify the token with Supabase
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (authError || !user) {
-        console.error('Auth verification failed:', authError);
-        return { success: false, error: 'Invalid or expired token' };
-      }
-
-      // Check if user is an admin in the admin_users table
-      const { data: adminData, error: adminError } = await supabase
-        .from('admin_users')
-        .select('id, email')
-        .eq('email', user.email)
-        .single();
-
-      if (adminError || !adminData) {
-        console.error('Admin verification failed:', adminError);
-        return { success: false, error: 'User is not authorized as admin' };
-      }
-
-      console.log('Admin auth verified:', adminData.email);
-      return { success: true, adminId: adminData.id };
-    } catch (supabaseError) {
-      console.error('Supabase auth error:', supabaseError);
-      return { success: false, error: 'Authentication service error' };
-    }
-  } catch (error) {
-    console.error('Auth verification error:', error);
-    return { success: false, error: 'Authentication verification failed' };
-  }
-}
 
 /**
  * GET /api/admin/subjects
@@ -101,25 +29,34 @@ export async function GET(request: Request) {
 
     // Get query parameters
     const url = new URL(request.url);
-    const department = url.searchParams.get('department');
     const semester = url.searchParams.get('semester');
     const credits = url.searchParams.get('credits');
     const search = url.searchParams.get('search');
+    const school_id = url.searchParams.get('school_id');
 
-    // Build query
-    let query = supabase.from('subjects').select('*');
+    // Build query with school information
+    let query = supabase
+      .from('subjects')
+      .select(`
+        *,
+        schools!inner(
+          id,
+          name,
+          description
+        )
+      `);
 
     // Apply filters
-    if (department) {
-      query = query.eq('department', department);
-    }
-    
     if (semester) {
       query = query.eq('semester', semester);
     }
     
     if (credits) {
       query = query.eq('credits', parseInt(credits));
+    }
+    
+    if (school_id) {
+      query = query.eq('school_id', school_id);
     }
     
     if (search) {
@@ -191,11 +128,11 @@ export async function POST(request: Request) {
     const subjectData: CreateSubjectData = body;
 
     // Validate required fields
-    if (!subjectData.code || !subjectData.name) {
+    if (!subjectData.code || !subjectData.name || !subjectData.school_id) {
       return NextResponse.json(
         {
           data: null,
-          error: 'Subject code and name are required',
+          error: 'Subject code, name, and school are required',
           status: 400
         } as ApiResponse<Subject>,
         { status: 400 }
@@ -220,16 +157,34 @@ export async function POST(request: Request) {
       );
     }
 
+    // Verify that the school exists
+    const { data: schoolExists } = await supabase
+      .from('schools')
+      .select('id')
+      .eq('id', subjectData.school_id)
+      .single();
+
+    if (!schoolExists) {
+      return NextResponse.json(
+        {
+          data: null,
+          error: 'Invalid school selected',
+          status: 400
+        } as ApiResponse<Subject>,
+        { status: 400 }
+      );
+    }
+
     // Create the subject
     const { data, error } = await supabase
       .from('subjects')
       .insert([{
         code: subjectData.code,
         name: subjectData.name,
+        school_id: subjectData.school_id,
         credits: subjectData.credits || 3, // Default to 3 credits
         description: subjectData.description || null,
         semester: subjectData.semester || null,
-        department: subjectData.department || null,
       }])
       .select()
       .single();
@@ -347,10 +302,33 @@ export async function PUT(request: Request) {
       }
     }
 
+    // If updating school_id, verify that the school exists
+    if (updateData.school_id) {
+      const { data: schoolExists } = await supabase
+        .from('schools')
+        .select('id')
+        .eq('id', updateData.school_id)
+        .single();
+
+      if (!schoolExists) {
+        return NextResponse.json(
+          {
+            data: null,
+            error: 'Invalid school selected',
+            status: 400
+          } as ApiResponse<Subject>,
+          { status: 400 }
+        );
+      }
+    }
+
     // Update the subject
     const { data, error } = await supabase
       .from('subjects')
-      .update(updateData)
+      .update({
+        ...updateData,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id)
       .select()
       .single();

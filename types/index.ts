@@ -6,4 +6,5 @@ export * from './database';
 export * from './store';
 export * from './subject';
 export * from './timetable';
-export * from './tutorial'; 
+export * from './tutorial';
+export * from './school'; 

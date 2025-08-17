@@ -56,7 +56,7 @@ export interface SubjectWithTutorials {
   credits: number;
   description: string | null;
   semester: string | null;
-  department: string | null;
+  school_id: string;
   tutorials: TutorialGroup[];
 }
 

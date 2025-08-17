@@ -19,7 +19,6 @@ export default function SubjectSelectionModal({
   title = "Add Subjects to Your Timetable"
 }: SubjectSelectionModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState('');
 
   const {
     availableSubjects,
@@ -45,20 +44,12 @@ export default function SubjectSelectionModal({
   const filteredSubjects = availableSubjects.filter(subject => {
     const matchesSearch = !searchQuery || 
       subject.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (subject.department && subject.department.toLowerCase().includes(searchQuery.toLowerCase()));
+      subject.name.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesDepartment = !departmentFilter || subject.department === departmentFilter;
-    
-    return matchesSearch && matchesDepartment;
+    return matchesSearch;
   });
 
-  // Get unique departments for filter
-  const departments = Array.from(new Set(
-    availableSubjects
-      .map(subject => subject.department)
-      .filter(Boolean)
-  )).sort() as string[];
+
 
   // Check if subject is selected
   const isSubjectSelected = (subjectId: string): boolean => {
@@ -77,7 +68,6 @@ export default function SubjectSelectionModal({
   // Clear filters
   const clearFilters = () => {
     setSearchQuery('');
-    setDepartmentFilter('');
   };
 
   if (!isOpen) return null;
@@ -101,24 +91,10 @@ export default function SubjectSelectionModal({
         {/* Search and Filters */}
         <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 gap-3 sm:gap-4">
-            {/* Department Filter and Search Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
-              {/* Department Filter */}
-              <div className="sm:col-span-1">
-                <select
-                  value={departmentFilter}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
-                  className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="">All Departments</option>
-                  {departments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              </div>
-
+            {/* Search Row */}
+            <div className="grid grid-cols-1 gap-3 sm:gap-4">
               {/* Search */}
-              <div className="sm:col-span-3">
+              <div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                   <input
@@ -134,13 +110,13 @@ export default function SubjectSelectionModal({
           </div>
 
           {/* Clear Filters */}
-          {(searchQuery || departmentFilter) && (
+          {searchQuery && (
             <div className="mt-3 sm:mt-4 flex justify-end">
               <button
                 onClick={clearFilters}
                 className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
               >
-                Clear Filters
+                Clear Search
               </button>
             </div>
           )}
@@ -166,7 +142,7 @@ export default function SubjectSelectionModal({
                   <Search className="h-12 w-12 mx-auto" />
                 </div>
                 <p className="text-gray-500 dark:text-gray-400">
-                  {searchQuery || departmentFilter 
+                  {searchQuery 
                     ? "No subjects match your search criteria" 
                     : "No subjects available"}
                 </p>

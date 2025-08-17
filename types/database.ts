@@ -5,6 +5,29 @@
 export type Database = {
   public: {
     Tables: {
+      schools: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       subjects: {
         Row: {
           id: string;
@@ -13,7 +36,7 @@ export type Database = {
           credits: number;
           description: string | null;
           semester: string | null;
-          department: string | null;
+          school_id: string;
           created_at: string;
           updated_at: string;
         };
@@ -24,7 +47,7 @@ export type Database = {
           credits?: number;
           description?: string | null;
           semester?: string | null;
-          department?: string | null;
+          school_id: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -35,7 +58,7 @@ export type Database = {
           credits?: number;
           description?: string | null;
           semester?: string | null;
-          department?: string | null;
+          school_id?: string;
           created_at?: string;
           updated_at?: string;
         };
