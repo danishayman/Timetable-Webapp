@@ -220,25 +220,14 @@ export default function AdminSubjectsPage() {
 
   if (viewMode !== 'list') {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Back Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => setViewMode('list')}
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Subject List
-          </button>
-        </div>
-        
+      <>
         <SubjectForm
           subject={editingSubject}
           onSuccess={handleFormSuccess}
           onCancel={handleFormCancel}
           isLoading={loading}
         />
-      </div>
+      </>
     );
   }
 

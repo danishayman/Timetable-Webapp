@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Subject, CreateSubjectData, UpdateSubjectData, School } from '@/types';
 import { FormValidator } from '@/lib/inputValidation';
-
+import { BookOpen, Building2, GraduationCap, FileText, Calendar, Hash } from 'lucide-react';
 
 interface SubjectFormProps {
   /** Subject to edit (undefined for creating new subject) */
@@ -49,6 +49,7 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
   const [loadingSchools, setLoadingSchools] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Fetch schools on component mount
   useEffect(() => {
@@ -135,6 +136,9 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
       [field]: value
     }));
 
+    // Mark as having unsaved changes
+    setHasUnsavedChanges(true);
+
     // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
@@ -142,6 +146,17 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
         [field]: undefined
       }));
     }
+  };
+
+  // Enhanced cancel handler with unsaved changes check
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave? Your changes will be lost.'
+      );
+      if (!confirmed) return;
+    }
+    onCancel();
   };
 
   // Handle form submission
@@ -179,6 +194,7 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
       }
 
       console.log('Subject saved successfully:', result.data);
+      setHasUnsavedChanges(false); // Reset unsaved changes flag
       onSuccess();
     } catch (error) {
       console.error('Error saving subject:', error);
@@ -193,200 +209,411 @@ export default function SubjectForm({ subject, onSuccess, onCancel, isLoading = 
   const isFormDisabled = isLoading || isSubmitting;
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md max-w-2xl mx-auto">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
-        {subject ? 'Edit Subject' : 'Create New Subject'}
-      </h2>
-
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-        {/* Subject Code */}
-        <div>
-          <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
-            Subject Code *
-          </label>
-          <input
-            id="code"
-            type="text"
-            value={formData.code}
-            onChange={(e) => handleInputChange('code', e.target.value.toUpperCase())}
-            disabled={isFormDisabled}
-            placeholder="e.g., CS101, MATH201"
-            className={`w-full px-3 py-3 sm:py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 text-base sm:text-sm ${
-              errors.code ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.code && (
-            <p className="mt-1 text-sm text-red-600">{errors.code}</p>
-          )}
-        </div>
-
-        {/* Subject Name */}
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            Subject Name *
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            disabled={isFormDisabled}
-            placeholder="e.g., Introduction to Computer Science"
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
-              errors.name ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-          )}
-        </div>
-
-        {/* School Selection */}
-        <div>
-          <label htmlFor="school_id" className="block text-sm font-medium text-gray-700 mb-2">
-            School *
-          </label>
-          {loadingSchools ? (
-            <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 flex items-center">
-              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-              <span className="text-gray-500">Loading schools...</span>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+              <BookOpen className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
-          ) : (
-            <select
-              id="school_id"
-              value={formData.school_id}
-              onChange={(e) => handleInputChange('school_id', e.target.value)}
-              disabled={isFormDisabled}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
-                errors.school_id ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">Select a school...</option>
-              {schools.map(school => (
-                <option key={school.id} value={school.id}>
-                  {school.name}
-                </option>
-              ))}
-            </select>
-          )}
-          {errors.school_id && (
-            <p className="mt-1 text-sm text-red-600">{errors.school_id}</p>
-          )}
-          {!loadingSchools && schools.length === 0 && (
-            <p className="mt-1 text-sm text-yellow-600">
-              No schools available. Please create a school first.
-            </p>
-          )}
-        </div>
-
-        {/* Credits */}
-        <div>
-          <label htmlFor="credits" className="block text-sm font-medium text-gray-700 mb-2">
-            Credits *
-          </label>
-          <select
-            id="credits"
-            value={formData.credits}
-            onChange={(e) => handleInputChange('credits', parseInt(e.target.value))}
-            disabled={isFormDisabled}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
-              errors.credits ? 'border-red-500' : 'border-gray-300'
-            }`}
-          >
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(credit => (
-              <option key={credit} value={credit}>
-                {credit} {credit === 1 ? 'Credit' : 'Credits'}
-              </option>
-            ))}
-          </select>
-          {errors.credits && (
-            <p className="mt-1 text-sm text-red-600">{errors.credits}</p>
-          )}
-        </div>
-
-
-
-        {/* Semester */}
-        <div>
-          <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-2">
-            Semester
-          </label>
-          <input
-            id="semester"
-            type="text"
-            value={formData.semester}
-            onChange={(e) => handleInputChange('semester', e.target.value)}
-            disabled={isFormDisabled}
-            placeholder="e.g., Fall 2024, Spring 2025"
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
-              errors.semester ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.semester && (
-            <p className="mt-1 text-sm text-red-600">{errors.semester}</p>
-          )}
-        </div>
-
-        {/* Description */}
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-            Description
-          </label>
-          <textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
-            disabled={isFormDisabled}
-            placeholder="Brief description of the subject..."
-            rows={4}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 ${
-              errors.description ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-          )}
-          <p className="mt-1 text-sm text-gray-500">
-            {formData.description.length}/1000 characters
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            {subject ? 'Edit Subject' : 'Create New Subject'}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {subject 
+              ? 'Update the subject information below' 
+              : 'Fill in the details to create a new subject'
+            }
           </p>
         </div>
 
-        {/* Submit Error */}
-        {errors.submit && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-600">{errors.submit}</p>
-          </div>
-        )}
+        {/* Form Card */}
+        <div className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden animate-scale-in">
+          <form onSubmit={handleSubmit} className="p-8">
+            {/* Basic Information Section */}
+            <div className="mb-8 animate-slide-in-up">
+              <div className="flex items-center mb-6">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg mr-3 animate-float">
+                  <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Basic Information
+                </h2>
+                <div className="ml-auto">
+                  <div className={`w-3 h-3 rounded-full transition-colors duration-200 ${
+                    formData.code && formData.name ? 'bg-green-500' : 'bg-gray-300'
+                  }`}></div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Subject Code */}
+                <div className="space-y-2">
+                  <label htmlFor="code" className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Hash className="h-4 w-4 mr-2 text-gray-500" />
+                    Subject Code
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    id="code"
+                    type="text"
+                    value={formData.code}
+                    onChange={(e) => handleInputChange('code', e.target.value.toUpperCase())}
+                    disabled={isFormDisabled}
+                    placeholder="e.g., CS101, MATH201"
+                    className={`w-full px-4 py-3 border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 ${
+                      errors.code 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                        : 'border-gray-300 hover:border-gray-400 focus:border-blue-500'
+                    }`}
+                    aria-describedby={errors.code ? "code-error" : "code-help"}
+                  />
+                  {errors.code && (
+                    <p id="code-error" className="text-sm text-red-600 flex items-center mt-1 animate-fade-in">
+                      <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center mr-2 text-xs">!</span>
+                      {errors.code}
+                    </p>
+                  )}
+                  {!errors.code && formData.code && (
+                    <p className="text-sm text-green-600 flex items-center mt-1 animate-fade-in">
+                      <span className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center mr-2 text-xs">✓</span>
+                      Subject code looks good
+                    </p>
+                  )}
+                </div>
 
-        {/* Form Actions */}
-        <div className="flex space-x-4 pt-4">
-          <button
-            type="submit"
-            disabled={isFormDisabled}
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {subject ? 'Updating...' : 'Creating...'}
-              </span>
-            ) : (
-              subject ? 'Update Subject' : 'Create Subject'
+                {/* Subject Name */}
+                <div className="space-y-2">
+                  <label htmlFor="name" className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <BookOpen className="h-4 w-4 mr-2 text-gray-500" />
+                    Subject Name
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    disabled={isFormDisabled}
+                    placeholder="e.g., Introduction to Computer Science"
+                    className={`w-full px-4 py-3 border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 ${
+                      errors.name 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                        : 'border-gray-300 hover:border-gray-400 focus:border-blue-500'
+                    }`}
+                    aria-describedby={errors.name ? "name-error" : "name-help"}
+                  />
+                  {errors.name && (
+                    <p id="name-error" className="text-sm text-red-600 flex items-center mt-1 animate-fade-in">
+                      <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center mr-2 text-xs">!</span>
+                      {errors.name}
+                    </p>
+                  )}
+                  {!errors.name && formData.name && formData.name.length >= 3 && (
+                    <p className="text-sm text-green-600 flex items-center mt-1 animate-fade-in">
+                      <span className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center mr-2 text-xs">✓</span>
+                      Subject name looks good
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Academic Details Section */}
+            <div className="mb-8 border-t border-gray-200 dark:border-gray-700 pt-8 animate-slide-in-up" style={{animationDelay: '0.1s'}}>
+              <div className="flex items-center mb-6">
+                <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg mr-3 animate-float" style={{animationDelay: '0.5s'}}>
+                  <GraduationCap className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Academic Details
+                </h2>
+                <div className="ml-auto">
+                  <div className={`w-3 h-3 rounded-full transition-colors duration-200 ${
+                    formData.school_id && formData.credits ? 'bg-green-500' : 'bg-gray-300'
+                  }`}></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* School Selection */}
+                <div className="md:col-span-2 space-y-2">
+                  <label htmlFor="school_id" className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Building2 className="h-4 w-4 mr-2 text-gray-500" />
+                    School
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  {loadingSchools ? (
+                    <div className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 flex items-center">
+                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3"></div>
+                      <span className="text-gray-500">Loading schools...</span>
+                    </div>
+                  ) : (
+                    <select
+                      id="school_id"
+                      value={formData.school_id}
+                      onChange={(e) => handleInputChange('school_id', e.target.value)}
+                      disabled={isFormDisabled}
+                      className={`w-full px-4 py-3 border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+                        errors.school_id 
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <option value="">Select a school...</option>
+                      {schools.map(school => (
+                        <option key={school.id} value={school.id}>
+                          {school.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {errors.school_id && (
+                    <p className="text-sm text-red-600 flex items-center mt-1">
+                      <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center mr-2">!</span>
+                      {errors.school_id}
+                    </p>
+                  )}
+                  {!loadingSchools && schools.length === 0 && (
+                    <p className="text-sm text-yellow-600 flex items-center mt-1">
+                      <span className="w-4 h-4 rounded-full bg-yellow-100 flex items-center justify-center mr-2">!</span>
+                      No schools available. Please create a school first.
+                    </p>
+                  )}
+                </div>
+
+                {/* Credits */}
+                <div className="space-y-2">
+                  <label htmlFor="credits" className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Hash className="h-4 w-4 mr-2 text-gray-500" />
+                    Credits
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <select
+                    id="credits"
+                    value={formData.credits}
+                    onChange={(e) => handleInputChange('credits', parseInt(e.target.value))}
+                    disabled={isFormDisabled}
+                    className={`w-full px-4 py-3 border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+                      errors.credits 
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(credit => (
+                      <option key={credit} value={credit}>
+                        {credit} {credit === 1 ? 'Credit' : 'Credits'}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.credits && (
+                    <p className="text-sm text-red-600 flex items-center mt-1">
+                      <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center mr-2">!</span>
+                      {errors.credits}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Semester */}
+              <div className="mt-6 space-y-2">
+                <label htmlFor="semester" className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                  Semester
+                  <span className="text-gray-400 ml-1 text-xs">(Optional)</span>
+                </label>
+                <input
+                  id="semester"
+                  type="text"
+                  value={formData.semester}
+                  onChange={(e) => handleInputChange('semester', e.target.value)}
+                  disabled={isFormDisabled}
+                  placeholder="e.g., Fall 2024, Spring 2025"
+                  className={`w-full px-4 py-3 border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 ${
+                    errors.semester 
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                />
+                {errors.semester && (
+                  <p className="text-sm text-red-600 flex items-center mt-1">
+                    <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center mr-2">!</span>
+                    {errors.semester}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Additional Information Section */}
+            <div className="mb-8 border-t border-gray-200 dark:border-gray-700 pt-8 animate-slide-in-up" style={{animationDelay: '0.2s'}}>
+              <div className="flex items-center mb-6">
+                <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg mr-3 animate-float" style={{animationDelay: '1s'}}>
+                  <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Additional Information
+                </h2>
+                <div className="ml-auto">
+                  <div className={`w-3 h-3 rounded-full transition-colors duration-200 ${
+                    formData.description ? 'bg-green-500' : 'bg-gray-300'
+                  }`}></div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <label htmlFor="description" className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                  Description
+                  <span className="text-gray-400 ml-1 text-xs">(Optional)</span>
+                </label>
+                <textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  disabled={isFormDisabled}
+                  placeholder="Brief description of the subject, learning objectives, or any additional notes..."
+                  rows={4}
+                  className={`w-full px-4 py-3 border-2 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 resize-none ${
+                    errors.description 
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                />
+                {errors.description && (
+                  <p className="text-sm text-red-600 flex items-center mt-1">
+                    <span className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center mr-2">!</span>
+                    {errors.description}
+                  </p>
+                )}
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Optional: Add a brief description of the subject</span>
+                  <span className={formData.description.length > 900 ? 'text-red-500' : formData.description.length > 800 ? 'text-yellow-500' : ''}>
+                    {formData.description.length}/1000
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Error */}
+            {errors.submit && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl">
+                <div className="flex items-center">
+                  <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                    <span className="text-red-600 font-bold">!</span>
+                  </div>
+                  <p className="text-red-700 dark:text-red-400 font-medium">{errors.submit}</p>
+                </div>
+              </div>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isFormDisabled}
-            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
-          >
-            Cancel
-          </button>
+
+            {/* Form Actions */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  type="submit"
+                  disabled={isFormDisabled}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {subject ? 'Updating Subject...' : 'Creating Subject...'}
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center">
+                      <BookOpen className="h-5 w-5 mr-2" />
+                      {subject ? 'Update Subject' : 'Create Subject'}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={isFormDisabled}
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-4 px-6 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all duration-200 border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
-      </form>
+
+        {/* Progress Indicator */}
+        <div className="mt-8 text-center animate-fade-in">
+          <div className="inline-flex items-center bg-white dark:bg-gray-800 px-6 py-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-4 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  formData.code && formData.name 
+                    ? 'bg-green-500 scale-110 shadow-lg shadow-green-500/30' 
+                    : 'bg-gray-300'
+                }`}></div>
+                <span className={`font-medium transition-colors duration-300 ${
+                  formData.code && formData.name 
+                    ? 'text-green-700 dark:text-green-400' 
+                    : 'text-gray-500'
+                }`}>
+                  Basic Info
+                </span>
+              </div>
+              <div className={`w-8 h-0.5 transition-colors duration-300 ${
+                formData.code && formData.name && formData.school_id 
+                  ? 'bg-green-500' 
+                  : 'bg-gray-300'
+              }`}></div>
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  formData.school_id && formData.credits 
+                    ? 'bg-green-500 scale-110 shadow-lg shadow-green-500/30' 
+                    : formData.code && formData.name 
+                      ? 'bg-blue-400 animate-pulse' 
+                      : 'bg-gray-300'
+                }`}></div>
+                <span className={`font-medium transition-colors duration-300 ${
+                  formData.school_id && formData.credits 
+                    ? 'text-green-700 dark:text-green-400' 
+                    : formData.code && formData.name 
+                      ? 'text-blue-600 dark:text-blue-400' 
+                      : 'text-gray-500'
+                }`}>
+                  Academic Details
+                </span>
+              </div>
+              <div className={`w-8 h-0.5 transition-colors duration-300 ${
+                formData.school_id && formData.credits && formData.description 
+                  ? 'bg-green-500' 
+                  : 'bg-gray-300'
+              }`}></div>
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  formData.description 
+                    ? 'bg-green-500 scale-110 shadow-lg shadow-green-500/30' 
+                    : formData.school_id && formData.credits 
+                      ? 'bg-purple-400 animate-pulse' 
+                      : 'bg-gray-300'
+                }`}></div>
+                <span className={`font-medium transition-colors duration-300 ${
+                  formData.description 
+                    ? 'text-green-700 dark:text-green-400' 
+                    : formData.school_id && formData.credits 
+                      ? 'text-purple-600 dark:text-purple-400' 
+                      : 'text-gray-500'
+                }`}>
+                  Additional Info
+                </span>
+                <span className="text-xs text-gray-400 ml-1">(Optional)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
