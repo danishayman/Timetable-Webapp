@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { ClassSchedule, CreateClassScheduleData, UpdateClassScheduleData } from '@/types/classSchedule';
 import { Subject } from '@/types/subject';
+import { School } from '@/types/school';
 import { DAYS_OF_WEEK, CLASS_TYPES } from '@/constants';
 import { FormValidator } from '@/lib/inputValidation';
 import { X, Save, ArrowLeft, Clock, MapPin, Users, BookOpen, Calendar, AlertCircle, CheckCircle, Info } from 'lucide-react';
+import SearchableSelect, { SearchableSelectOption } from '@/components/ui/SearchableSelect';
 
 interface ScheduleFormProps {
   /** Schedule to edit (undefined for creating new schedule) */
@@ -14,6 +16,8 @@ interface ScheduleFormProps {
   defaultSubjectId?: string;
   /** List of available subjects for selection */
   subjects: Subject[];
+  /** List of available schools for selection */
+  schools: School[];
   /** Called when form is submitted successfully */
   onSuccess: () => void;
   /** Called when form is cancelled */
@@ -23,6 +27,7 @@ interface ScheduleFormProps {
 }
 
 interface ScheduleFormData {
+  school_id: string;
   subject_id: string;
   type: 'lecture' | 'tutorial' | 'lab' | 'practical';
   day_of_week: number;
@@ -34,6 +39,7 @@ interface ScheduleFormData {
 }
 
 interface FormErrors {
+  school_id?: string;
   subject_id?: string;
   type?: string;
   day_of_week?: string;
@@ -63,11 +69,13 @@ export default function ScheduleForm({
   schedule, 
   defaultSubjectId,
   subjects,
+  schools,
   onSuccess, 
   onCancel, 
   isLoading = false 
 }: ScheduleFormProps) {
   const [formData, setFormData] = useState<ScheduleFormData>({
+    school_id: '',
     subject_id: defaultSubjectId || '',
     type: 'lecture',
     day_of_week: 1, // Monday
@@ -90,7 +98,9 @@ export default function ScheduleForm({
   // Pre-populate form when editing existing schedule
   useEffect(() => {
     if (schedule) {
+      const selectedSubject = subjects.find(s => s.id === schedule.subject_id);
       const newFormData = {
+        school_id: selectedSubject?.school_id || '',
         subject_id: schedule.subject_id,
         type: schedule.type,
         day_of_week: schedule.day_of_week,
@@ -103,13 +113,15 @@ export default function ScheduleForm({
       setFormData(newFormData);
       setHasUnsavedChanges(false);
     }
-  }, [schedule]);
+  }, [schedule, subjects]);
 
   // Track changes for unsaved changes detection
   useEffect(() => {
     if (!schedule) return; // Don't track changes for new schedules until first input
     
+    const selectedSubject = subjects.find(s => s.id === schedule.subject_id);
     const hasChanges = JSON.stringify(formData) !== JSON.stringify({
+      school_id: selectedSubject?.school_id || '',
       subject_id: schedule.subject_id,
       type: schedule.type,
       day_of_week: schedule.day_of_week,
@@ -121,7 +133,7 @@ export default function ScheduleForm({
     });
     
     setHasUnsavedChanges(hasChanges);
-  }, [formData, schedule]);
+  }, [formData, schedule, subjects]);
 
   // Form validation
   const validateForm = (): boolean => {
@@ -301,12 +313,84 @@ export default function ScheduleForm({
 
   // Helper functions for step validation
   const isStep1Valid = () => {
-    return formData.subject_id && formData.type && !errors.subject_id && !errors.type;
+    return formData.school_id && formData.subject_id && formData.type && !errors.school_id && !errors.subject_id && !errors.type;
   };
 
   const isStep2Valid = () => {
     return formData.day_of_week !== undefined && formData.start_time && formData.end_time && 
            !errors.day_of_week && !errors.start_time && !errors.end_time;
+  };
+
+  // Filter subjects by selected school
+  const filteredSubjects = formData.school_id 
+    ? subjects.filter(subject => subject.school_id === formData.school_id)
+    : subjects;
+
+  // Helper functions to get options for SearchableSelect
+  const getSchoolOptions = (): SearchableSelectOption[] => {
+    return schools.map(school => ({
+      value: school.id,
+      label: school.name,
+      subtitle: school.description || undefined
+    }));
+  };
+
+  const getSubjectOptions = (): SearchableSelectOption[] => {
+    return filteredSubjects.map(subject => ({
+      value: subject.id,
+      label: `${subject.code} - ${subject.name}`,
+      subtitle: `${subject.credits} ${subject.credits === 1 ? 'Credit' : 'Credits'}${subject.semester ? ` • ${subject.semester}` : ''}`
+    }));
+  };
+
+  // Handle school selection change
+  const handleSchoolChange = (schoolId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      school_id: schoolId,
+      subject_id: '' // Clear subject when school changes
+    }));
+
+    // Mark field as touched
+    setFieldTouched(prev => ({ ...prev, school_id: true, subject_id: false }));
+
+    // Set hasUnsavedChanges for new schedules on first input
+    if (!schedule && !hasUnsavedChanges) {
+      setHasUnsavedChanges(true);
+    }
+
+    // Clear errors for school and subject fields
+    if (errors.school_id || errors.subject_id) {
+      setErrors(prev => ({
+        ...prev,
+        school_id: undefined,
+        subject_id: undefined
+      }));
+    }
+  };
+
+  // Handle subject selection change
+  const handleSubjectChange = (subjectId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      subject_id: subjectId
+    }));
+
+    // Mark field as touched
+    setFieldTouched(prev => ({ ...prev, subject_id: true }));
+
+    // Set hasUnsavedChanges for new schedules on first input
+    if (!schedule && !hasUnsavedChanges) {
+      setHasUnsavedChanges(true);
+    }
+
+    // Clear error for subject field
+    if (errors.subject_id) {
+      setErrors(prev => ({
+        ...prev,
+        subject_id: undefined
+      }));
+    }
   };
 
   const getStepTitle = (step: number) => {
@@ -416,34 +500,57 @@ export default function ScheduleForm({
                   <div className="space-y-6">
                     <div className="text-center mb-6">
                       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Subject & Class Type</h3>
-                      <p className="text-gray-600 dark:text-gray-300">Select the subject and type of class you want to schedule</p>
+                      <p className="text-gray-600 dark:text-gray-300">First select the school, then choose the subject and type of class</p>
+                    </div>
+
+                    {/* School Selection */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                        School *
+                      </label>
+                      <SearchableSelect
+                        options={getSchoolOptions()}
+                        value={formData.school_id}
+                        onChange={handleSchoolChange}
+                        placeholder="Search and select a school..."
+                        searchPlaceholder="Search schools..."
+                        emptyMessage="No schools found"
+                        disabled={isFormDisabled}
+                        error={errors.school_id}
+                        clearable={true}
+                      />
+                      {errors.school_id && (
+                        <div className="mt-2 flex items-center text-red-600 dark:text-red-400">
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                          <span className="text-sm">{errors.school_id}</span>
+                        </div>
+                      )}
+                      {formData.school_id && !errors.school_id && (
+                        <div className="mt-2 flex items-center text-green-600 dark:text-green-400">
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          <span className="text-sm">
+                            School selected: {schools.find(s => s.id === formData.school_id)?.name}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Subject Selection */}
                     <div>
-                      <label htmlFor="subject_id" className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
                         Subject *
                       </label>
-                      <select
-                        id="subject_id"
+                      <SearchableSelect
+                        options={getSubjectOptions()}
                         value={formData.subject_id}
-                        onChange={(e) => handleInputChange('subject_id', e.target.value)}
-                        disabled={isFormDisabled}
-                        className={`w-full px-4 py-3 border-2 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-                          errors.subject_id 
-                            ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' 
-                            : fieldTouched.subject_id && formData.subject_id
-                            ? 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/20'
-                            : 'border-gray-300 bg-white hover:border-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-blue-400'
-                        }`}
-                      >
-                        <option value="">Select a subject...</option>
-                        {subjects.map(subject => (
-                          <option key={subject.id} value={subject.id}>
-                            {subject.code} - {subject.name}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={handleSubjectChange}
+                        placeholder={formData.school_id ? "Search and select a subject..." : "Please select a school first"}
+                        searchPlaceholder="Search subjects..."
+                        emptyMessage={formData.school_id ? "No subjects found in this school" : "Please select a school first"}
+                        disabled={isFormDisabled || !formData.school_id}
+                        error={errors.subject_id}
+                        clearable={true}
+                      />
                       {errors.subject_id && (
                         <div className="mt-2 flex items-center text-red-600 dark:text-red-400">
                           <AlertCircle className="w-4 h-4 mr-2" />

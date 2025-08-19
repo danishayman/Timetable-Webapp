@@ -6,6 +6,7 @@ import { Calendar, Plus, Edit, Trash2, Search, Filter, AlertCircle, CheckCircle,
 import ScheduleForm from '@/components/features/admin/ScheduleForm';
 import { ClassSchedule } from '@/types/classSchedule';
 import { Subject } from '@/types/subject';
+import { School } from '@/types/school';
 import useAdminAuthStore from '@/store/adminAuthStore';
 import { DAYS_OF_WEEK, CLASS_TYPES } from '@/constants';
 
@@ -25,6 +26,7 @@ export default function AdminSchedulesPage() {
   
   const [schedules, setSchedules] = useState<ClassSchedule[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -57,7 +59,7 @@ export default function AdminSchedulesPage() {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([fetchSchedules(), fetchSubjects()]);
+      await Promise.all([fetchSchedules(), fetchSubjects(), fetchSchools()]);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load data');
@@ -119,6 +121,26 @@ export default function AdminSchedulesPage() {
       setSubjects(result.data || []);
     } catch (err) {
       console.error('Error fetching subjects:', err);
+      throw err;
+    }
+  };
+
+  const fetchSchools = async () => {
+    try {
+      const response = await fetch('/api/admin/schools', {
+        headers: {
+          'Authorization': 'Bearer mock-token-for-testing', // TODO: Replace with real auth token
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch schools');
+      }
+
+      const result = await response.json();
+      setSchools(result.data || []);
+    } catch (err) {
+      console.error('Error fetching schools:', err);
       throw err;
     }
   };
@@ -242,6 +264,7 @@ export default function AdminSchedulesPage() {
       <ScheduleForm
         schedule={editingSchedule}
         subjects={subjects}
+        schools={schools}
         onSuccess={handleFormSuccess}
         onCancel={handleFormCancel}
         isLoading={loading}
