@@ -31,7 +31,11 @@ export async function GET(request: Request) {
           id,
           code,
           name,
-          department
+          school_id,
+          schools!inner(
+            id,
+            name
+          )
         )
       `);
 
@@ -77,6 +81,18 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     console.error('Unexpected error in schedules API:', error);
+    
+    // Check if it's an environment variable error
+    if (error instanceof Error && error.message.includes('environment variable')) {
+      return NextResponse.json(
+        {
+          data: null,
+          error: 'Database configuration error. Please ensure Supabase environment variables are properly configured.',
+          status: 500
+        } as ApiResponse<ClassSchedule[]>,
+        { status: 500 }
+      );
+    }
     
     return NextResponse.json(
       {

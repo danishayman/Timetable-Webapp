@@ -9,7 +9,7 @@ import { ApiValidator, DataBoundaryValidator } from '@/lib/inputValidation';
  * GET /api/subjects
  * Returns a list of all subjects
  * Optional query parameters:
- * - department: Filter by department
+ * - department: Filter by school name (legacy parameter)
  * - semester: Filter by semester
  * - credits: Filter by credits
  * - search: Search by code or name
@@ -50,12 +50,21 @@ export async function GET(request: Request) {
     const sanitizedParams = paramValidation.sanitizedData || queryParams;
     const { department, semester, credits, search } = sanitizedParams as Record<string, string>;
 
-    // Build query
-    let query = supabase.from('subjects').select('*');
+    // Build query with school information
+    let query = supabase
+      .from('subjects')
+      .select(`
+        *,
+        schools!inner(
+          id,
+          name
+        )
+      `);
 
     // Apply filters with validated data
     if (department) {
-      query = query.eq('department', department);
+      // Map department to school for backwards compatibility
+      query = query.eq('schools.name', department);
     }
     
     if (semester) {

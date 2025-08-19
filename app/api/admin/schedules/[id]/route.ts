@@ -38,8 +38,12 @@ export async function GET(
           id,
           code,
           name,
-          department,
-          credits
+          school_id,
+          credits,
+          schools!inner(
+            id,
+            name
+          )
         )
       `)
       .eq('id', id)
